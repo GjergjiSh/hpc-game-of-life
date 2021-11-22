@@ -1,32 +1,55 @@
-PRJ_PATH = -I./include \
+PRJ_PATH = -I./include/optimized \
+           -I./include/unoptimized \
            -I.
 
-OBJ_PATH = ./obj
+UNOPT_OBJ_PATH = ./objunopt
+OPT_OBJ_PATH = ./objopt
 
-OBJ_PRJ = $(OBJ_PATH)/GameOfLife.o $(OBJ_PATH)/Main.o
+
+UNOPT_OBJ_PRJ = $(UNOPT_OBJ_PATH)/UnoptGameOfLife.o $(UNOPT_OBJ_PATH)/Main.o
+OPT_OBJ_PRJ = $(OPT_OBJ_PATH)/OptGameOfLife.o $(OPT_OBJ_PATH)/Main.o
+
 
 LIB_PRJ = #evtl. zusätliche libs
 
-SRC = ./src
+UNOPT_SRC = ./src/unoptimized
+OPT_SRC = ./src/optimized
 
-CC = g++ -fopenmp -std=c++17 $(PRJ_PATH) -Wno-write-strings -O3 -DNDEBUG -c
 
-LD = g++ -O3 -DNDEBUG -Wl,--no-as-needed -o GameOfLife
+UNOPT_CC = g++ -std=c++17 $(PRJ_PATH) -Wno-write-strings -DNDEBUG -c
+OPT_CC = g++ -fopenmp -std=c++17 $(PRJ_PATH) -Wno-write-strings -O3 -DNDEBUG -c
 
-all: $(OBJ_PATH) GameOfLife
+UNOPT_LD = g++ -DNDEBUG -Wl,--no-as-needed -o UnoptGameOfLife
+OPT_LD = g++ -DNDEBUG -Wl,--no-as-needed -o OptGameOfLife
 
-$(OBJ_PATH):
-	mkdir -p $(OBJ_PATH)
+all: $(UNOPT_OBJ_PATH) UnoptGameOfLife $(OPT_OBJ_PATH) OptGameOfLife
 
-GameOfLife: $(OBJ_PRJ)
-	$(LD) $(OBJ_PRJ) $(LIB_PRJ)
+$(UNOPT_OBJ_PATH):
+	mkdir -p $(UNOPT_OBJ_PATH)
 
-$(OBJ_PATH)/Main.o: ${SRC}/Main.cpp
-	$(CC) -o $@ $?
+$(OPT_OBJ_PATH):
+	mkdir -p $(OPT_OBJ_PATH)
 
-$(OBJ_PATH)/GameOfLife.o: ${SRC}/GameOfLife.cpp
-	$(CC) -o $@ $?
+UnoptGameOfLife: $(UNOPT_OBJ_PRJ)
+	$(UNOPT_LD) $(UNOPT_OBJ_PRJ) $(LIB_PRJ)
+
+$(UNOPT_OBJ_PATH)/Main.o: ${UNOPT_SRC}/Main.cpp
+	$(UNOPT_CC) -o $@ $?
+
+$(UNOPT_OBJ_PATH)/UnoptGameOfLife.o: ${UNOPT_SRC}/GameOfLife.cpp
+	$(UNOPT_CC) -o $@ $?
+
+OptGameOfLife: $(OPT_OBJ_PRJ)
+	$(OPT_LD) $(OPT_OBJ_PRJ) $(LIB_PRJ)
+
+$(OPT_OBJ_PATH)/Main.o: ${OPT_SRC}/OptMain.cpp
+	$(OPT_CC) -o $@ $?
+
+$(OPT_OBJ_PATH)/OptGameOfLife.o: ${OPT_SRC}/OptGameOfLife.cpp
+	$(OPT_CC) -o $@ $?
 
 clean:
-	rm -f -v -R $(OBJ_PATH)
-	rm -f -v GameOfLife
+	rm -f -v -R $(UNOPT_OBJ_PATH)
+	rm -f -v -R $(OPT_OBJ_PATH)
+	rm -f -v UnoptGameOfLife
+	rm -f -v OptGameOfLife
