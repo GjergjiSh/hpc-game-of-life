@@ -37,3 +37,4 @@ void generate_next_board_state(board_t& board);
 
 void display_cell_state(int cell);
 void display_board_state(board_t& board);
+void game_of_life_loop(board_t& board, int generations, int display);
