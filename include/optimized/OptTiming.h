@@ -12,7 +12,7 @@ class TimedScope
 //   //destructor gets called at the end of scope and prints time it took
 // }
 {
-    
+
 private:
 	// Type aliases to make accessing nested type easier
 	using clock_type = std::chrono::steady_clock;

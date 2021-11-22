@@ -4,6 +4,8 @@
 
 int main(int argc, char* argv[])
 {
+    std::cout << "Optimized Game of Life" << std::endl;
+
     //Board at generation n-1
     board_t board;
     board.col_nr = 20;
