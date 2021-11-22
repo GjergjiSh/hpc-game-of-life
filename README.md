@@ -3,7 +3,9 @@
 ## Usage
 
 * Build by running `make`
-* Run: `./GameOfLife <nr-rows> <nr-cols> <iterations> <display>`
+* Run the Optimized Implementation: `./OptGameOfLife <nr-rows> <nr-cols> <iterations> <display>`
+* Run the Unoptimized Implementation: `./UnoptGameOfLife <nr-rows> <nr-cols> <iterations> <display>`
+
 
 ### Parameters
 
