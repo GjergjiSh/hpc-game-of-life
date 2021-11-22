@@ -1,3 +1,6 @@
+#ifndef UNOPT_GAME_OF_LIFE_H
+#define UNOPT_GAME_OF_LIFE_H
+
 /*
 
 Rules of the game:
@@ -38,3 +41,5 @@ void generate_next_board_state(board_t& board);
 void display_cell_state(int cell);
 void display_board_state(board_t& board);
 void game_of_life_loop(board_t& board, int generations, int display);
+
+#endif /* UNOPT_GAME_OF_LIFE_H */
