@@ -1,5 +1,5 @@
-#ifndef PATTERNS_H
-#define PATTERNS_H
+#ifndef UNOPT_PATTERNS_H
+#define UNOPT_PATTERNS_H
 
 /* Collection of known patterns in GoL used for testing purpouses  */
 
@@ -16,4 +16,4 @@
 { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },\
 }
 
-#endif /* PATTERNS_H */
+#endif /* UNOPT_PATTERNS_H */

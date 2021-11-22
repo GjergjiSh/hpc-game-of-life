@@ -1,3 +1,6 @@
+#ifndef UNOPT_TIMING_H
+#define UNOPT_TIMING_H
+
 // from https://www.learncpp.com/cpp-tutorial/timing-your-code/ with a bit of RAII
 
 #include <chrono> // for std::chrono functions
@@ -26,3 +29,5 @@ public:
     double elapsed() const noexcept;
     ~TimedScope();
 };
+
+#endif /* UNOPT_TIMING_H */
