@@ -1,0 +1,188 @@
+% !TeX program = XeLaTeX or LuaLaTeX
+% !TeX encoding = UTF-8 Unicode
+% TEMPLATE.TEX
+%
+% Time-stamp: <2013-03-26 11:09 olenz>
+% Update: Okt. 2020, Samuel Maier: Warnungen beseitigt, scrpage hinzugefügt, für online-PDF optimiert, konkret Verwendet.
+%
+% This is an extensively documented LaTeX file that shows how to
+% produce a good-looking document with current LaTeX (11/2012).
+%
+% IMPORTANT!
+%
+%   Some obsolete commands and packages
+% ----------|-------------------------------
+% obsolete  |     Replacement in LATEX 2ε
+% ----------|-------------------------------
+%           | local            global/switch
+% ----------|-------------------------------
+% {\bf ...} | \textbf{...}     \bfseries
+%     -     | \emph{...}       \em
+% {\it ...} | \textit{...}     \itshape
+%     -     | \textmd{...}     \mdseries
+% {\rm ...} | \textrm{...}     \rmfamily
+% {\sc ...} | \textsc{...}     \scshape
+% {\sf ...} | \textsf{...}     \sffamily
+% {\sl ...} | \textsl{...}     \slshape
+% {\tt ...} | \texttt{...}     \ttfamily
+%     -     | \textup{...}     \upshape
+%
+% DON'T USE \\ TO MAKE LINEBREAKS, INSTEAD JUST LEAVE A BLANK LINE!
+%
+\RequirePackage[l2tabu,orthodox]{nag} % turn on warnings because of bad style
+\documentclass[a4paper,german,11pt,twoside=false]{scrartcl} %bibliography=totoc,
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% KOMA CLASSES
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% The class "scrartcl" is one of the so-called KOMA-classes, a set of
+% very well done LaTeX-classes that produce a very European layout
+% (e.g. titles with a sans-serif font).
+% 
+% The KOMA classes have extensive documentation that you can access
+% via the commands:
+%   texdoc scrguide # in German
+%   texdoc scrguien # in English
+%   
+%
+% The available classes are:
+%
+% scrartcl - for "articles", typically for up to ~20 pages, the
+%            highest level sectioning command is \section
+%
+% scrreprt - for "reports", typically for up to ~200 pages, the
+%            highest level sectioning command is \chapter
+%
+% scrbook  - for "books", for more than 200 pages, the highest level
+%            sectioning command is \part.
+%
+% USEFUL OPTIONS
+%
+% a4paper  - Use a4 paper instead of the default american letter
+%            format.
+%
+% german   - Use german default for packages, especially babel
+%
+% 11pt, 12pt, 10pt 
+%          - Use a font with the given size.
+%
+% bibtotoc - Add the bibliography to the table of contents
+%
+% The KOMA-script classes have plenty of options to modify
+
+% This allows to type UTF-8 characters like ä,ö,ü,ß
+\usepackage{babel}
+
+\usepackage[T1]{fontenc}        % Tries to use Postscript Type 1 Fonts for better rendering
+\usepackage{lmodern}            % Provides the Latin Modern Font which offers more glyphs than the default Computer Modern
+\usepackage[intlimits]{amsmath} % Provides all mathematical commands
+\usepackage{amssymb}            % Provides amonst others the qed symbol
+\usepackage{aligned-overset}    % allows for alignation of overset/underset chars by their main argument instead of the combined symbol
+\usepackage{enumitem}			% allows to make listings with different enumerations, e.x. a,b,c
+
+\usepackage{hyperref}           % Provides clickable links in the PDF-document for \ref
+\usepackage{grffile}            % Allow you to include images (like graphicx). Usage: \includegraphics{path/to/file}
+
+% Allows to set units
+\usepackage[ugly]{units}        % Allows you to type units with correct spacing and font style. Usage: $\unit[100]{m}$ or $\unitfrac[100]{m}{s}$
+
+% Additional packages
+\usepackage{url}                % Lets you typeset urls. Usage: \url{http://...}
+\usepackage{xspace}             % Use \xpsace in macros to automatically insert space based on context. Usage: \newcommand{\es}{ESPResSo\xspace}
+\usepackage{xcolor}             % Obviously colors. Usage: \color{red} Red text
+\usepackage{booktabs}           % Nice rules for tables. Usage \begin{tabular}\toprule ... \midrule ... \bottomrule
+
+\usepackage{fontspec}
+% Source code listings
+\usepackage{listings}           % Source Code Listings. Usage: \begin{lstlisting}...\end{lstlisting}
+\usepackage{lstfiracode}
+
+\usepackage{float}
+
+\setmonofont[Contextuals={Alternate}]{Fira Code Regular}
+\setsansfont{Calibri}
+
+\restylefloat{table}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    basicstyle=\ttfamily\small,
+    breaklines=true
+    % frame=shadowbox,
+%     numberstyle=\tiny\color{codegray},
+%     stringstyle=\color{codepurple},
+%     basicstyle=\footnotesize,
+%     breakatwhitespace=false,
+%     breaklines=true,
+%     captionpos=b,
+%     keepspaces=true,
+%     % numbers=left,
+%     % numbersep=5pt,
+%     showspaces=false,
+%     showstringspaces=false,
+%     showtabs=false,
+%     tabsize=2
+}
+
+\lstset{style=mystyle}
+
+% Add the ability to actually set the header and footer
+\usepackage[footsepline=true]{scrlayer-scrpage}
+\pagestyle{scrheadings}
+
+
+
+\begin{document}
+
+\sffamily % Use sans-serif font (I hate serif-fonts)
+
+\newcommand{\module}{HPC\xspace}
+\newcommand{\group}{Gruppe GjeSam, WS 21/22\xspace}
+
+\titlehead{High Performance Computing Wintersemester 21/22, HFT Stuttgart \hfill WS 2021/2022}
+\title{Abschlussprojekt}
+\author{
+  \textbf{\group:} \\
+  Gjergji Shkurti, XXXX\\
+  Samuel Maier, 1002330
+}
+\date{\today}
+
+\lohead{\group}
+\cohead{Abschlussprojekt}
+\rohead{\module, HFT Stuttgart}
+
+\maketitle
+
+\pagebreak
+
+\section{Motivation}
+
+In diesem Projekt wollen wir unser bisheriges Wissen anwenden. 
+Dafür gab es ein paar Vorschläge von Seiten Herr Prof. Speisers, wir haben uns letztlich für den ersten Vorschlag, mit unseren eigenen Anpassungen, entschieden.
+Das Problem ist konzeptionell nicht aufwendig, was uns den Fokus auf die eigentlichen Themen der Vorlesung erlaubt, und einfach erwaiterbar, wie wir im kommenden Zeigen werden.
+
+Denn das Game of Life einfach durchzurechnen mag zwar einfach optimierbar sein, aber da wir die Spielschritte jwewils aufgeben wollen, limitiert uns das.
+
+Wir könnten natürlich nur jedes n-te Spielfeld ausgeben, oder das Spiel auf massiver Größe anschauen, da verliert man aber schnell die Übersicht, und es ist letztlich nichts wirklich nachvollziehbar.
+
+Daher haben wir uns für eine etwas andere Problemstellung geeinigt, und zwar auf die Feststellung dessen, wann das Spiel sich wiederholt.
+Zur Erkennung des Wiederholens setzen wir auf simple strukturelle Gleichheit des Spielfeldes, andere Ansätze gehen thematisch über den Sinn dieser Projektarbeit und würden Zeit vom eigentlichen Thema abzwecken.
+
+\section{Problemstellung}
+
+Wir beginnen mit einer einfachen Implementierung in C++, die 
+
+\section{Lösungsansatz}
+
+\section{Implementierung}
+
+\end{document}
