@@ -8,7 +8,7 @@
             "name": "(gdb) Debug GameOfLife",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/GameOfLife",
+            "program": "${workspaceFolder}/UnoptGameOfLife",
             "args": ["10", "20", "10", "1"], //Parameters given to the program
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
