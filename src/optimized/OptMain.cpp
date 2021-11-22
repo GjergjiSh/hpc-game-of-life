@@ -1,5 +1,6 @@
 #include "OptGameOfLife.h"
 #include "OptPatterns.h"
+#include "OptTiming.h"
 #include <iostream>
 
 int main(int argc, char* argv[])
@@ -22,6 +23,7 @@ int main(int argc, char* argv[])
         display_board_state(board);
     }
 
+    TimedScope optimized_gol_timer("Optimized game of life timer");
     game_of_life_loop(board, generations, display);
 
     return 0;
