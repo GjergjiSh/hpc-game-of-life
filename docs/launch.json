@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/GameOfLife",
-            "args": ["10", "20", "10"], //Parameters given to the program
+            "args": ["10", "20", "10", "1"], //Parameters given to the program
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],

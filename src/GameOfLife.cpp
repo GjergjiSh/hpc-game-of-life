@@ -74,8 +74,8 @@ void display_board_state(board_t& board)
         display_row_state(row);
     }
     //Sleep for 1s after displaying the state and clear stdout
-    sleep(1);
-    int ret = std::system("clear");
+    //sleep(1);
+    //int ret = std::system("clear");
 }
 
 // Generates the next state of a cell based on the rules of the game
@@ -90,17 +90,30 @@ int generate_cell_state(int row, int col, board_t& board)
 // Loops through all board cells and generates the next board state based on the rules of the game
 void generate_next_board_state(board_t& current_board_state)
 {
-    // Store previous board state
-    board_t previous = current_board_state;
+    //Store current board state to avoid overriding during cell state generation
+    board_t temp = current_board_state;
 
     // Loop through rows
-    for (int row = 0; row < previous.row_nr; row++) {
+    for (int row = 0; row < current_board_state.row_nr; row++) {
 
         // Loop through cols
-        for (int col = 0; col < previous.col_nr; col++) {
+        for (int col = 0; col < current_board_state.col_nr; col++) {
 
             // generate new states for row
-            current_board_state.cell_rows.at(row).at(col) = generate_cell_state(row, col, previous);
+            current_board_state.cell_rows.at(row).at(col) = generate_cell_state(row, col, temp);
+        }
+    }
+}
+
+//Generate a set of iterations
+void game_of_life_loop(board_t& board, int generations, int display)
+{
+    for (int gen = 0; gen < generations; gen++) {
+        generate_next_board_state(board);
+
+        if (display) {
+            std::cout << "State at generation n=" << gen << std::endl;
+            display_board_state(board);
         }
     }
 }
