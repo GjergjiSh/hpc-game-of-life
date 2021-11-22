@@ -57,8 +57,10 @@ dkms.conf
 .DS_Store
 
 # Build Artifacts
-obj
-GameOfLife
+OptGameOfLife
+UnoptGameOfLife
+objopt
+objunopt
 
 # miscellaneous
 misc
