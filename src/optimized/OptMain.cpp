@@ -1,5 +1,5 @@
-#include "GameOfLife.h"
-#include "Patterns.h"
+#include "OptGameOfLife.h"
+#include "OptPatterns.h"
 #include <iostream>
 
 int main(int argc, char* argv[])
