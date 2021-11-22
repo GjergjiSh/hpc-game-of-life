@@ -6,8 +6,8 @@ UNOPT_OBJ_PATH = ./objunopt
 OPT_OBJ_PATH = ./objopt
 
 
-UNOPT_OBJ_PRJ = $(UNOPT_OBJ_PATH)/UnoptGameOfLife.o $(UNOPT_OBJ_PATH)/Main.o
-OPT_OBJ_PRJ = $(OPT_OBJ_PATH)/OptGameOfLife.o $(OPT_OBJ_PATH)/Main.o
+UNOPT_OBJ_PRJ = $(UNOPT_OBJ_PATH)/UnoptGameOfLife.o $(UNOPT_OBJ_PATH)/Main.o $(UNOPT_OBJ_PATH)/Timing.o
+OPT_OBJ_PRJ = $(OPT_OBJ_PATH)/OptGameOfLife.o $(OPT_OBJ_PATH)/Main.o $(OPT_OBJ_PATH)/Timing.o
 
 
 LIB_PRJ = #evtl. zusätliche libs
@@ -39,6 +39,9 @@ $(UNOPT_OBJ_PATH)/Main.o: ${UNOPT_SRC}/Main.cpp
 $(UNOPT_OBJ_PATH)/UnoptGameOfLife.o: ${UNOPT_SRC}/GameOfLife.cpp
 	$(UNOPT_CC) -o $@ $?
 
+$(UNOPT_OBJ_PATH)/Timing.o: ${UNOPT_SRC}/Timing.cpp
+	$(UNOPT_CC) -o $@ $?
+
 OptGameOfLife: $(OPT_OBJ_PRJ)
 	$(OPT_LD) $(OPT_OBJ_PRJ) $(LIB_PRJ)
 
@@ -46,6 +49,9 @@ $(OPT_OBJ_PATH)/Main.o: ${OPT_SRC}/OptMain.cpp
 	$(OPT_CC) -o $@ $?
 
 $(OPT_OBJ_PATH)/OptGameOfLife.o: ${OPT_SRC}/OptGameOfLife.cpp
+	$(OPT_CC) -o $@ $?
+
+$(OPT_OBJ_PATH)/Timing.o: ${OPT_SRC}/OptTiming.cpp
 	$(OPT_CC) -o $@ $?
 
 clean:

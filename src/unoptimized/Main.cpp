@@ -1,5 +1,6 @@
 #include "GameOfLife.h"
 #include "Patterns.h"
+#include "Timing.h"
 #include <iostream>
 
 int main(int argc, char* argv[])
@@ -22,6 +23,7 @@ int main(int argc, char* argv[])
         display_board_state(board);
     }
 
+    TimedScope unoptimized_gol_timer("Unoptimized game of life timer");
     game_of_life_loop(board, generations, display);
 
     return 0;
