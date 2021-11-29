@@ -17,10 +17,10 @@ OPT_SRC = ./src/optimized
 
 
 UNOPT_CC = g++ -std=c++17 $(PRJ_PATH) -Wno-write-strings -DNDEBUG -c
-OPT_CC = g++ -fopenmp -std=c++17 $(PRJ_PATH) -Wno-write-strings -O3 -DNDEBUG -c
+OPT_CC = g++ -std=c++17 $(PRJ_PATH) -Wno-write-strings -O3 -DNDEBUG -c
 
 UNOPT_LD = g++ -DNDEBUG -Wl,--no-as-needed -o UnoptGameOfLife
-OPT_LD = g++ -O3 -DNDEBUG -Wl,--no-as-needed -o OptGameOfLife
+OPT_LD = g++ -fopenmp -O3 -DNDEBUG -Wl,--no-as-needed -o OptGameOfLife
 
 all: $(UNOPT_OBJ_PATH) UnoptGameOfLife $(OPT_OBJ_PATH) OptGameOfLife
 
