@@ -30,8 +30,11 @@ int cell_state_at(int row, int col, board_t& board)
 int get_neighbour_count(int row, int col, board_t& board)
 {
     int neighbour_count = 0;
-    std::vector<int> indexes { -1, 0, 1 };
 
+    //Optimization: Array instead of vector to avoid heap allocations
+    //std::vector<int> indexes { -1, 0, 1 };
+    int indexes[3] = {-1, 0, 1};
+    
     // Check col
     for (int i : indexes) {
 
