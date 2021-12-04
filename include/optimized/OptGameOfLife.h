@@ -26,7 +26,7 @@ These rules, which compare the behavior of the automaton to real life, can be co
 
 typedef struct
 {
-    std::vector<std::vector<int>> cell_rows;
+    std::vector<std::vector<int8_t>> cell_rows;
     int row_nr;
     int col_nr;
 } board_t;
@@ -39,8 +39,9 @@ int get_neighbour_count(int row, int col, board_t& board);
 int generate_cell_state(int row, int col, board_t& board);
 void generate_next_board_state(board_t& board);
 
-void display_cell_state(int cell);
+void display_cell_state(int8_t cell);
+void display_row_state(const std::vector<int8_t>& row);
 void display_board_state(board_t& board);
 void game_of_life_loop(board_t& board, int generations, int display);
 
-#endif /* OPT_GAME_OF_LIFE_H */
+#endif /* OPT_GAME_OF_LIFE_H */ 

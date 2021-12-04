@@ -8,7 +8,7 @@ void generate_initial_board_state(board_t& board, int rows, int cols)
 
     for (int row = 0; row < board.row_nr; row++) {
 
-        std::vector<int> cell_row;
+        std::vector<int8_t> cell_row;
 
         for (int col = 0; col < board.col_nr; col++) {
             int val = rand() % 2;
@@ -33,7 +33,7 @@ int get_neighbour_count(int row, int col, board_t& board)
 
     //Optimization: Array instead of vector to avoid heap allocations
     //std::vector<int> indexes { -1, 0, 1 };
-    int indexes[3] = {-1, 0, 1};
+    int8_t indexes[3] = {-1, 0, 1};
     
     // Check col
     for (int i : indexes) {
@@ -54,13 +54,13 @@ int get_neighbour_count(int row, int col, board_t& board)
 }
 
 // Print out the value of a cell (* for ALIVE " " for DEAD)
-void display_cell_state(int cell)
+void display_cell_state(int8_t cell)
 {
     std::cout << (cell ? "*" : " ");
 }
 
 // Displays cell state for an entire row
-void display_row_state(const std::vector<int>& row)
+void display_row_state(const std::vector<int8_t>& row)
 {
     std::cout << "|";
     // Loop through cells in row and display their values
@@ -73,7 +73,7 @@ void display_row_state(const std::vector<int>& row)
 // Displays all the cell values for the board
 void display_board_state(board_t& board)
 {
-    for (const std::vector<int>& row : board.cell_rows) {
+    for (const std::vector<int8_t>& row : board.cell_rows) {
         display_row_state(row);
     }
     //Sleep for 1s after displaying the state and clear stdout
