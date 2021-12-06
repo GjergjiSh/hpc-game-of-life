@@ -30,6 +30,7 @@ int cell_state_at(int row, int col, board_t& board)
 int get_neighbour_count(int row, int col, board_t& board)
 {
     int neighbour_count = 0;
+    //Optimization: Array instead of vector to avoid heap allocations
     int indexes[3] = { -1, 0, 1 };
 
     // Check col
@@ -105,6 +106,7 @@ void generate_next_board_state(board_t& current_board_state, board_t& new_board_
 //Generate a set of iterations
 void game_of_life_loop(board_t& board, int generations, int display)
 {
+    //Optimization: Preallocate vectors outside of game loop
     board_t other_board = board;
     for (int gen = 0; gen < generations / 2; gen++) {
         generate_next_board_state(board, other_board);

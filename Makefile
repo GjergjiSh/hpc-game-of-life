@@ -11,7 +11,7 @@ OPT_OBJ:=$(patsubst %.cpp, %.opt.o, $(SRC))
 BASE_CC = g++ -std=c++17 $(INC_PATH) -Wno-write-strings -Wall -DNDEBUG
 
 UNOPT_CC = $(BASE_CC)
-OPT_CC = $(BASE_CC) -O3
+OPT_CC = $(BASE_CC) -fopenmp -O3
 
 # The rules to generate the optimized and unoptimized object files
 $(UNOPT_OBJ): %.unopt.o: %.cpp
