@@ -1,12 +1,10 @@
-#include "GameOfLife.h"
-#include "Patterns.h"
-#include "Timing.h"
+#include "unoptimized/GameOfLife.h"
+#include "common/Patterns.h"
+#include "common/Timing.h"
 #include <iostream>
 
 int main(int argc, char* argv[])
 {
-    std::cout << "Unoptimized Game of Life" << std::endl;
-
     //Board at generation n-1
     board_t board;
     board.col_nr = 20;
@@ -23,7 +21,7 @@ int main(int argc, char* argv[])
         display_board_state(board);
     }
 
-    TimedScope unoptimized_gol_timer("Unoptimized game of life timer");
+    TimedScope unoptimized_gol_timer("GoL timer");
     game_of_life_loop(board, generations, display);
 
     return 0;
