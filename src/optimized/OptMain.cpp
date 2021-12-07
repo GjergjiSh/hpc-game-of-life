@@ -43,5 +43,8 @@ int main(int argc, char* argv[])
     TimedScope optimized_gol_timer("Optimized game of life timer");
     game_of_life_loop(board, temp_board, generations, display, verbose);
 
+    delete[] board.cells;
+    delete[] temp_board.cells;
+
     return 0;
 }
