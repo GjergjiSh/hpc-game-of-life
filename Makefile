@@ -1,61 +1,66 @@
-PRJ_PATH = -I./include/optimized \
-           -I./include/unoptimized \
-           -I.
+INC_PATH = -I./include/
 
-UNOPT_OBJ_PATH = ./objunopt
-OPT_OBJ_PATH = ./objopt
+# Includes all cpp files. You cen debug these kind of things with rules with @echo
+SRC:=$(wildcard src/**/*.cpp)
 
+# We generate the object files aside the cpp file, with .opt.o/.unopt.o file endings with/without compiler optimizations
+UNOPT_OBJ:=$(patsubst %.cpp, %.unopt.o, $(SRC))
+OPT_OBJ:=$(patsubst %.cpp, %.opt.o, $(SRC))
 
-UNOPT_OBJ_PRJ = $(UNOPT_OBJ_PATH)/UnoptGameOfLife.o $(UNOPT_OBJ_PATH)/Main.o $(UNOPT_OBJ_PATH)/Timing.o
-OPT_OBJ_PRJ = $(OPT_OBJ_PATH)/OptGameOfLife.o $(OPT_OBJ_PATH)/Main.o $(OPT_OBJ_PATH)/Timing.o
+# The cpp-compiler with the default flags we always provide
+BASE_CC = g++ -std=c++17 $(INC_PATH) -Wno-write-strings -Wall -DNDEBUG
 
+UNOPT_CC = $(BASE_CC)
+OPT_CC = $(BASE_CC) -fopenmp -O3
 
-LIB_PRJ = #evtl. zusätliche libs
+# The rules to generate the optimized and unoptimized object files
+$(UNOPT_OBJ): %.unopt.o: %.cpp
+	$(UNOPT_CC) -c $< -o $@
 
-UNOPT_SRC = ./src/unoptimized
-OPT_SRC = ./src/optimized
+$(OPT_OBJ): %.opt.o: %.cpp
+	$(OPT_CC) -c $< -o $@
 
+BASE_LD = g++ -DNDEBUG -Wl,--no-as-needed
+UNOPT_LD = $(BASE_LD)
+OPT_LD = $(BASE_LD) -O3
 
-UNOPT_CC = g++ -std=c++17 $(PRJ_PATH) -Wno-write-strings -DNDEBUG -c
-OPT_CC = g++ -fopenmp -std=c++17 $(PRJ_PATH) -Wno-write-strings -O3 -DNDEBUG -c
+# The dependencies of the manually optimized or not GameOfLife
+MO_GoL_DEPS = common/Timing optimized/GameOfLife optimized/Main
+MU_GoL_DEPS = common/Timing unoptimized/GameOfLife unoptimized/Main
 
-UNOPT_LD = g++ -DNDEBUG -Wl,--no-as-needed -o UnoptGameOfLife
-OPT_LD = g++ -O3 -DNDEBUG -Wl,--no-as-needed -o OptGameOfLife
+# TODO DOC
+MO_CO_OBJ = $(patsubst %, src/%.opt.o, $(MO_GoL_DEPS))
+GameOfLife.mo.co.out: $(MO_CO_OBJ)
+	$(OPT_LD) -o GameOfLife.mo.co.out $(MO_CO_OBJ)
 
-all: $(UNOPT_OBJ_PATH) UnoptGameOfLife $(OPT_OBJ_PATH) OptGameOfLife
+MU_CO_OBJ = $(patsubst %, src/%.opt.o, $(MU_GoL_DEPS))
+GameOfLife.mu.co.out: $(MU_CO_OBJ)
+	$(OPT_LD) -o GameOfLife.mu.co.out $(MU_CO_OBJ)
 
-$(UNOPT_OBJ_PATH):
-	mkdir -p $(UNOPT_OBJ_PATH)
+MO_CU_OBJ = $(patsubst %, src/%.unopt.o, $(MO_GoL_DEPS))
+GameOfLife.mo.cu.out: $(MO_CU_OBJ)
+	$(UNOPT_LD) -o GameOfLife.mo.cu.out $(MO_CU_OBJ)
 
-$(OPT_OBJ_PATH):
-	mkdir -p $(OPT_OBJ_PATH)
+MU_CU_OBJ = $(patsubst %, src/%.unopt.o, $(MU_GoL_DEPS))
+GameOfLife.mu.cu.out: $(MU_CU_OBJ)
+	$(UNOPT_LD) -o GameOfLife.mu.cu.out $(MU_CU_OBJ)
 
-UnoptGameOfLife: $(UNOPT_OBJ_PRJ)
-	$(UNOPT_LD) $(UNOPT_OBJ_PRJ) $(LIB_PRJ)
+# All executables we generate in the end
+ALL_EXECUTABLES = GameOfLife.mo.co.out GameOfLife.mu.co.out GameOfLife.mo.cu.out GameOfLife.mu.cu.out
 
-$(UNOPT_OBJ_PATH)/Main.o: ${UNOPT_SRC}/Main.cpp
-	$(UNOPT_CC) -o $@ $?
+all: $(ALL_EXECUTABLES)
 
-$(UNOPT_OBJ_PATH)/UnoptGameOfLife.o: ${UNOPT_SRC}/GameOfLife.cpp
-	$(UNOPT_CC) -o $@ $?
+# arguments for the executables
+CMD_ARGS = 50 50 3000 0
 
-$(UNOPT_OBJ_PATH)/Timing.o: ${UNOPT_SRC}/Timing.cpp
-	$(UNOPT_CC) -o $@ $?
+# Execute all executables to compare them
+.PHONY: bench
+bench: all
+	./GameOfLife.mo.co.out $(CMD_ARGS)
+	./GameOfLife.mu.co.out $(CMD_ARGS)
+	./GameOfLife.mo.cu.out $(CMD_ARGS)
+	./GameOfLife.mu.cu.out $(CMD_ARGS)
 
-OptGameOfLife: $(OPT_OBJ_PRJ)
-	$(OPT_LD) $(OPT_OBJ_PRJ) $(LIB_PRJ)
-
-$(OPT_OBJ_PATH)/Main.o: ${OPT_SRC}/OptMain.cpp
-	$(OPT_CC) -o $@ $?
-
-$(OPT_OBJ_PATH)/OptGameOfLife.o: ${OPT_SRC}/OptGameOfLife.cpp
-	$(OPT_CC) -o $@ $?
-
-$(OPT_OBJ_PATH)/Timing.o: ${OPT_SRC}/OptTiming.cpp
-	$(OPT_CC) -o $@ $?
-
+.PHONY: clean
 clean:
-	rm -f -v -R $(UNOPT_OBJ_PATH)
-	rm -f -v -R $(OPT_OBJ_PATH)
-	rm -f -v UnoptGameOfLife
-	rm -f -v OptGameOfLife
+	rm -f -v $(OPT_OBJ) $(UNOPT_OBJ) $(ALL_EXECUTABLES)

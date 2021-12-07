@@ -1,5 +1,5 @@
 // from https://www.learncpp.com/cpp-tutorial/timing-your-code/ with a bit of RAII
-#include "Timing.h"
+#include "common/Timing.h"
 
 TimedScope::TimedScope(char* timer_name): start(clock_type::now()), name(timer_name) {};
 

@@ -1,4 +1,4 @@
-#include "OptGameOfLife.h"
+#include "optimized/GameOfLife.h"
 
 // Generates an initial board state with size (rows:cols)
 void generate_initial_board_state(board_t& board, int rows, int cols)
@@ -30,7 +30,8 @@ int cell_state_at(int row, int col, board_t& board)
 int get_neighbour_count(int row, int col, board_t& board)
 {
     int neighbour_count = 0;
-    std::vector<int> indexes { -1, 0, 1 };
+    //Optimization: Array instead of vector to avoid heap allocations
+    int indexes[3] = { -1, 0, 1 };
 
     // Check col
     for (int i : indexes) {
@@ -88,11 +89,8 @@ int generate_cell_state(int row, int col, board_t& board)
 }
 
 // Loops through all board cells and generates the next board state based on the rules of the game
-void generate_next_board_state(board_t& current_board_state)
+void generate_next_board_state(board_t& current_board_state, board_t& new_board_state)
 {
-    //Store current board state to avoid overriding during cell state generation
-    board_t temp = current_board_state;
-
     // Loop through rows
     for (int row = 0; row < current_board_state.row_nr; row++) {
 
@@ -100,7 +98,7 @@ void generate_next_board_state(board_t& current_board_state)
         for (int col = 0; col < current_board_state.col_nr; col++) {
 
             // generate new states for row
-            current_board_state.cell_rows.at(row).at(col) = generate_cell_state(row, col, temp);
+            new_board_state.cell_rows.at(row).at(col) = generate_cell_state(row, col, current_board_state);
         }
     }
 }
@@ -108,12 +106,10 @@ void generate_next_board_state(board_t& current_board_state)
 //Generate a set of iterations
 void game_of_life_loop(board_t& board, int generations, int display)
 {
-    for (int gen = 0; gen < generations; gen++) {
-        generate_next_board_state(board);
-
-        if (display) {
-            std::cout << "State at generation n=" << gen << std::endl;
-            display_board_state(board);
-        }
+    //Optimization: Preallocate vectors outside of game loop
+    board_t other_board = board;
+    for (int gen = 0; gen < generations / 2; gen++) {
+        generate_next_board_state(board, other_board);
+        generate_next_board_state(other_board, board);
     }
 }
