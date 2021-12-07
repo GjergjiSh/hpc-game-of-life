@@ -2,10 +2,9 @@
 
 ## Usage
 
-* Build by running `make`
+* Build by running `make all` or `make bench`. (Make bench runs versions of GoL automatically for comparison)
 * Run the Optimized Implementation: `./OptGameOfLife <nr-rows> <nr-cols> <iterations> <display>`
 * Run the Unoptimized Implementation: `./UnoptGameOfLife <nr-rows> <nr-cols> <iterations> <display>`
-
 
 ### Parameters
 
