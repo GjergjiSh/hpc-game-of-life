@@ -1,4 +1,4 @@
-#include "GameOfLife.h"
+#include "unoptimized/GameOfLife.h"
 
 // Generates an initial board state with size (rows:cols)
 void generate_initial_board_state(board_t& board, int rows, int cols)
