@@ -191,8 +191,8 @@ void display_board_state(board_t& board, const bool& verbose)
     std::cout << "\n";
 
     if (verbose) {
-        for (int row = 0; row < board.rows; row++) {
-            for (int col = 0; col < board.cols; col++) {
+        for (u_int row = 0; row < board.rows; row++) {
+            for (u_int col = 0; col < board.cols; col++) {
                 if (cell_is_alive(board, row, col)) {
 
                     u_char* cell_ptr = board.cells + (col * board.cols) + row;
