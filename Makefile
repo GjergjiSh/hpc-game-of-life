@@ -51,19 +51,19 @@ ALL_EXECUTABLES = GameOfLife.mo.co.out GameOfLife.mu.co.out GameOfLife.mo.cu.out
 all: $(ALL_EXECUTABLES)
 
 # arguments for the executables
-CMD_ARGS = 20 20 60000 0
+CMD_ARGS = 10 10 60000 0
 
 # Execute all executables to compare them
 .PHONY: bench
 bench: all
-	@echo "\nManuell optimiert, compiler optimiert"
-	./GameOfLife.mo.co.out $(CMD_ARGS)
-	@echo "\nManuell unoptimiert, compiler optimiert"
-	./GameOfLife.mu.co.out $(CMD_ARGS)
+	# @echo "\nManuell optimiert, compiler optimiert"
+	# ./GameOfLife.mo.co.out $(CMD_ARGS)
+	# @echo "\nManuell unoptimiert, compiler optimiert"
+	# ./GameOfLife.mu.co.out $(CMD_ARGS)
 	@echo "\nManuell optimiert, compiler unoptimiert"
 	./GameOfLife.mo.cu.out $(CMD_ARGS)
-	@echo "\nManuell unoptimiert, compiler unoptimiert"
-	./GameOfLife.mu.cu.out $(CMD_ARGS)
+	# @echo "\nManuell unoptimiert, compiler unoptimiert"
+	# ./GameOfLife.mu.cu.out $(CMD_ARGS)
 
 .PHONY: clean
 clean:

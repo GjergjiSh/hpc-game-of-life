@@ -134,41 +134,35 @@ void generate_initial_state(board_t& board, const float live_cell_percentage)
 //@GjergjiSh #TODO clear up indexing here to make the code a bit more readable
 void generate_next_board_state(board_t& board, board_t& temp_board)
 {
-    u_int row, nb_count;
-    u_char* cell_ptr;
-
     memcpy(temp_board.cells, board.cells, board.length);
+    // #pragma omp parallel for
+    for (u_int index = 0; index < board.rows * board.cols; index ++) {
+        auto lookup_cell_ptr = temp_board.cells + index;
+        if (*lookup_cell_ptr == 0) continue;
+        auto nb_count = (*lookup_cell_ptr) >> 1;
+        bool is_alive = (*lookup_cell_ptr) & 0b01;
+        
+        if (is_alive) {
+            // if the cell stays alive, skip
+            if (2 <= nb_count && nb_count <= 3) continue;
+            u_int col = index % board.rows;
+            u_int row = index / board.rows;
+            // // kill the cell
+            // auto write_cell_ptr = board.cells + index;
+            // *write_cell_ptr &= ~0b01;
+            // #pragma omp critical {
 
-    cell_ptr = temp_board.cells;
-
-    for (row = 0; row < board.rows; row++) {
-
-        for (u_int col = 0; col < board.cols; col++) {
-            // Skip all dead cells with no neighbours
-            // Cells with no neighbours are 0 bytes
-            while (*cell_ptr == 0) {
-                cell_ptr++;
-                if (++col >= board.cols)
-                    goto SKIP_ROW;
-            }
-
-            // Get the neighbour count by shifting the bits in the cell by one to the left
-            // this removes the state bit and only leaves the nb count bits
-            nb_count = *cell_ptr >> 1;
-
-            if (*cell_ptr & 0x01) { // if the first bit of the selected cell is 1
-                if ((nb_count != 2) && (nb_count != 3)) {
-                    kill_cell(board, col, row);
-                }
-            } else {
-                if (nb_count == 3) {
-                    spawn_cell(board, col, row);
-                }
-            }
-
-            cell_ptr++;
+            // }
+            #pragma omp critical
+            kill_cell(board, col, row);
+        } else {
+            // cell only gains life when it has precisely 3 neibors
+            if (nb_count != 3) continue;
+            u_int col = index % board.rows;
+            u_int row = index / board.rows;
+            #pragma omp critical
+            spawn_cell(board, col, row);
         }
-    SKIP_ROW:;
     }
 }
 
@@ -208,12 +202,16 @@ void display_board_state(board_t& board, const bool& verbose)
 void game_of_life_loop(board_t& board, board_t& temp_board, const int& generations, const int& display, const bool& verbose)
 {
     for (int gen = 0; gen < generations; gen++) {
-        generate_next_board_state(board, temp_board);
 
         if (display) {
             std::cout << "State at generation n=" << gen << std::endl;
             display_board_state(board, verbose);
         }
+        generate_next_board_state(board, temp_board);
+    }
+    if (display) {
+        std::cout << "State at generation n=" << generations << std::endl;
+        display_board_state(board, verbose);
     }
 }
 

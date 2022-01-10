@@ -14,7 +14,7 @@ int main(int argc, char* argv[])
     board_t board;
     board.rows = std::stoi(argv[1]);
     board.cols = std::stoi(argv[2]);
-    board.length = board.rows * board.rows;
+    board.length = board.rows * board.cols;
     board.cells = new unsigned char[board.length];
 
     // Current state of the board (cells) is copied into the temp_board at next state generation
