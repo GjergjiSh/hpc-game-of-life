@@ -20,27 +20,31 @@ These rules, which compare the behavior of the automaton to real life, can be co
 */
 
 #include <iostream>
-#include <vector>
-#include <numeric>
-#include <unistd.h>
+#include <ctime>
+#include <string.h>
 
 typedef struct
 {
-    std::vector<std::vector<int>> cell_rows;
-    int row_nr;
-    int col_nr;
+    u_char* cells = nullptr;
+    u_int rows;
+    u_int cols;
+    u_int length;
 } board_t;
 
+u_char select_cell_at(board_t& board, const u_int row, const u_int col);
+void print_cell_bin_vals(u_char selcted_cell);
+void spawn_gilder(board_t& board, const bool& verbose);
 
-void generate_initial_board_state(board_t& board, int rows, int cols);
+int cell_is_alive(board_t& board, u_int col_idx, u_int row_idx);
+void get_wrap_indexes(board_t& board, const u_int& cell_x, const u_int& cell_y, int& xleft, int& xright, int& yabove, int& ybelow);
+void spawn_cell(board_t& board, const u_int& row, const u_int& col);
+void kill_cell(board_t& board, const u_int& row, const u_int& col);
 
-int cell_state_at(int row, int col, board_t& board);
-int get_neighbour_count(int row, int col, board_t& board);
-int generate_cell_state(int row, int col, board_t& board);
-void generate_next_board_state(board_t& board);
+void generate_initial_board_state(board_t& board, const float live_cell_percentage);
+void generate_next_board_state(board_t& board, board_t& temp_board);
 
-void display_cell_state(int cell);
-void display_board_state(board_t& board);
-void game_of_life_loop(board_t& board, int generations, int display);
+void display_board_state(board_t& board, const bool& verbose);
+void game_of_life_loop(board_t& board, board_t& temp_board, const int& generations, const int& display, const bool& verbose);
+
 
 #endif /* OPT_GAME_OF_LIFE_H */
