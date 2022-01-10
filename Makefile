@@ -8,10 +8,10 @@ UNOPT_OBJ:=$(patsubst %.cpp, %.unopt.o, $(SRC))
 OPT_OBJ:=$(patsubst %.cpp, %.opt.o, $(SRC))
 
 # The cpp-compiler with the default flags we always provide
-BASE_CC = g++ -std=c++17 $(INC_PATH) -Wno-write-strings -Wall -DNDEBUG
+BASE_CC = g++ -std=c++17 -fopenmp $(INC_PATH) -Wno-write-strings -Wall -DNDEBUG
 
 UNOPT_CC = $(BASE_CC)
-OPT_CC = $(BASE_CC) -fopenmp -O3
+OPT_CC = $(BASE_CC) -O3
 
 # The rules to generate the optimized and unoptimized object files
 $(UNOPT_OBJ): %.unopt.o: %.cpp
@@ -20,7 +20,7 @@ $(UNOPT_OBJ): %.unopt.o: %.cpp
 $(OPT_OBJ): %.opt.o: %.cpp
 	$(OPT_CC) -c $< -o $@
 
-BASE_LD = g++ -DNDEBUG -Wl,--no-as-needed
+BASE_LD = g++ -fopenmp -DNDEBUG -Wl,--no-as-needed
 UNOPT_LD = $(BASE_LD)
 OPT_LD = $(BASE_LD) -O3
 
@@ -51,14 +51,18 @@ ALL_EXECUTABLES = GameOfLife.mo.co.out GameOfLife.mu.co.out GameOfLife.mo.cu.out
 all: $(ALL_EXECUTABLES)
 
 # arguments for the executables
-CMD_ARGS = 20 20 3000 0
+CMD_ARGS = 20 20 60000 0
 
 # Execute all executables to compare them
 .PHONY: bench
 bench: all
+	@echo "\nManuell optimiert, compiler optimiert"
 	./GameOfLife.mo.co.out $(CMD_ARGS)
+	@echo "\nManuell unoptimiert, compiler optimiert"
 	./GameOfLife.mu.co.out $(CMD_ARGS)
+	@echo "\nManuell optimiert, compiler unoptimiert"
 	./GameOfLife.mo.cu.out $(CMD_ARGS)
+	@echo "\nManuell unoptimiert, compiler unoptimiert"
 	./GameOfLife.mu.cu.out $(CMD_ARGS)
 
 .PHONY: clean

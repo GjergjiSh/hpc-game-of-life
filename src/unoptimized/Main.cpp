@@ -21,7 +21,7 @@ int main(int argc, char* argv[])
         display_board_state(board);
     }
 
-    TimedScope unoptimized_gol_timer("GoL timer");
+    TimedScope unoptimized_gol_timer("Unoptimized GoL timer");
     game_of_life_loop(board, generations, display);
 
     return 0;
