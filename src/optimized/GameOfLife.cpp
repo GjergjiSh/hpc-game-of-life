@@ -134,7 +134,7 @@ void generate_initial_state(board_t& board, const float live_cell_percentage)
 //@GjergjiSh #TODO clear up indexing here to make the code a bit more readable
 void generate_next_board_state(board_t& board, board_t& temp_board)
 {
-    u_int row, col, nb_count;
+    u_int row, nb_count;
     u_char* cell_ptr;
 
     memcpy(temp_board.cells, board.cells, board.length);
@@ -142,9 +142,8 @@ void generate_next_board_state(board_t& board, board_t& temp_board)
     cell_ptr = temp_board.cells;
 
     for (row = 0; row < board.rows; row++) {
-        col = 0;
-        do {
 
+        for (u_int col = 0; col < board.cols; col++) {
             // Skip all dead cells with no neighbours
             // Cells with no neighbours are 0 bytes
             while (*cell_ptr == 0) {
@@ -168,8 +167,7 @@ void generate_next_board_state(board_t& board, board_t& temp_board)
             }
 
             cell_ptr++;
-
-        } while (++col < board.cols);
+        }
     SKIP_ROW:;
     }
 }
