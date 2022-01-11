@@ -166,6 +166,39 @@ void generate_next_board_state(board_t& board, board_t& temp_board)
     }
 }
 
+//@GjergjiSh #TODO clear up indexing here to make the code a bit more readable
+void generate_next_board_state_block(board_t& board, unsigned char* temp)
+{
+    for (u_int index = 0; index < board.rows * board.cols; index ++) {
+        auto lookup_cell_ptr = board.cells + index;
+        if (*lookup_cell_ptr == 0) continue;
+        auto nb_count = (*lookup_cell_ptr) >> 1;
+        bool is_alive = (*lookup_cell_ptr) & 0b01;
+        
+        if (is_alive) {
+            // if the cell stays alive, skip
+            if (2 <= nb_count && nb_count <= 3) continue;
+            u_int col = index % board.rows;
+            u_int row = index / board.rows;
+            // // kill the cell
+            // auto write_cell_ptr = board.cells + index;
+            // *write_cell_ptr &= ~0b01;
+            // #pragma omp critical {
+
+            // }
+            #pragma omp critical
+            kill_cell(board, col, row);
+        } else {
+            // cell only gains life when it has precisely 3 neibors
+            if (nb_count != 3) continue;
+            u_int col = index % board.rows;
+            u_int row = index / board.rows;
+            #pragma omp critical
+            spawn_cell(board, col, row);
+        }
+    }
+}
+
 void display_board_state(board_t& board, const bool& verbose)
 {
     for (u_int row = 0; row < board.rows; row++) {
