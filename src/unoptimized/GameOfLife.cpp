@@ -1,4 +1,5 @@
 #include "unoptimized/GameOfLife.h"
+#include "omp.h"
 
 // Generates an initial board state with size (rows:cols)
 void generate_initial_board_state(board_t& board, int rows, int cols)
@@ -141,9 +142,10 @@ void game_of_life_loop(board_t& board, int generations, int display)
 
 void game_of_life_loop_omp(board_t& board, board_t& temp, int generations, int display)
 {
-
+    int num_threads;
 #pragma omp parallel
     {
+        num_threads = omp_get_num_threads();
         for (int gen = 0; gen < generations; gen++) {
 #pragma omp for
             for (int row = 0; row < board.row_nr; row++) {
@@ -156,7 +158,7 @@ void game_of_life_loop_omp(board_t& board, board_t& temp, int generations, int d
             }
 #pragma omp master
             {
-                //std::vector::swap(board.cell_rows, temp.cell_rows);
+                // std::vector::swap(board.cell_rows, temp.cell_rows);
                 board.cell_rows.swap(temp.cell_rows);
 
                 if (display) {
@@ -166,4 +168,5 @@ void game_of_life_loop_omp(board_t& board, board_t& temp, int generations, int d
 #pragma omp barrier
         }
     }
+    std::cout << "Number of threads: " << num_threads << std::endl;
 }
