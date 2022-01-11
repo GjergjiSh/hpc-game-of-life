@@ -19,6 +19,27 @@ void generate_initial_board_state(board_t& board, int rows, int cols)
     }
 }
 
+// Helper method to intialize the board with a glider pattern
+void spawn_glider(board_t& board)
+{
+    // Init empty vector
+    for (int row = 0; row < board.col_nr; row++) {
+        std::vector<int> cell_row;
+
+        for (int col = 0; col < board.col_nr; col++) {
+            cell_row.push_back(0);
+        }
+        board.cell_rows.push_back(cell_row);
+    }
+
+    // Spawn Gilder
+    board.cell_rows.at(1).at(2) = 1;
+    board.cell_rows.at(2).at(3) = 1;
+    board.cell_rows.at(3).at(1) = 1;
+    board.cell_rows.at(3).at(2) = 1;
+    board.cell_rows.at(3).at(3) = 1;
+}
+
 // Select the cell at (row:col) of the board
 int cell_state_at(int row, int col, board_t& board)
 {
@@ -30,7 +51,7 @@ int cell_state_at(int row, int col, board_t& board)
 int get_neighbour_count(int row, int col, board_t& board)
 {
     int neighbour_count = 0;
-    std::vector<int> indexes { -1, 0, 1 };
+    int indexes[3] = { -1, 0, 1 };
 
     // Check col
     for (int i : indexes) {
@@ -114,6 +135,35 @@ void game_of_life_loop(board_t& board, int generations, int display)
         if (display) {
             std::cout << "State at generation n=" << gen << std::endl;
             display_board_state(board);
+        }
+    }
+}
+
+void game_of_life_loop_omp(board_t& board, board_t& temp, int generations, int display)
+{
+
+#pragma omp parallel
+    {
+        for (int gen = 0; gen < generations; gen++) {
+#pragma omp for
+            for (int row = 0; row < board.row_nr; row++) {
+                for (int col = 0; col < board.col_nr; col++) {
+                    int alive_neighbours = get_neighbour_count(row, col, board);
+                    int cell_survives = board.cell_rows.at(row).at(col) && (alive_neighbours == 2 || alive_neighbours == 3);
+                    int cell_birth = !board.cell_rows.at(row).at(col) && (alive_neighbours == 3);
+                    temp.cell_rows.at(row).at(col) = cell_survives || cell_birth;
+                }
+            }
+#pragma omp master
+            {
+                //std::vector::swap(board.cell_rows, temp.cell_rows);
+                board.cell_rows.swap(temp.cell_rows);
+
+                if (display) {
+                    display_board_state(board);
+                }
+            }
+#pragma omp barrier
         }
     }
 }
