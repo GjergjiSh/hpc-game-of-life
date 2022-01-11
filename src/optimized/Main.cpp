@@ -9,8 +9,6 @@ int main(int argc, char* argv[])
 
     const bool verbose = 0;
 
-    // @9SMTM6 Weird undefined behaviour when the height and width of the cell array are non symmetrical
-    // Still needs to be figured out
     board_t board;
     board.rows = std::stoi(argv[1]);
     board.cols = std::stoi(argv[2]);
@@ -26,6 +24,7 @@ int main(int argc, char* argv[])
 
     size_t single_cell_size = sizeof(*board.cells);
     size_t cell_array_size = board.length * single_cell_size;
+
     // std::cout << "Size of each cell is " << single_cell_size << "bytes" << std::endl;
     // std::cout << "Size of the entire array is " <<  cell_array_size << "bytes" << std::endl;
 
