@@ -51,8 +51,8 @@ ALL_EXECUTABLES = GameOfLife.mo.co.out GameOfLife.mu.co.out GameOfLife.mo.cu.out
 all: $(ALL_EXECUTABLES)
 
 # arguments for the executables
-CMD_ARGS = 64 64 60000 0 0
-CMD_ARGS_OMP = 64 64 60000 0 1
+CMD_ARGS = 64 64 100000 0 1
+CMD_ARGS_OMP = 64 64 100000 0 0
 
 # Execute all executables to compare them
 .PHONY: bench
