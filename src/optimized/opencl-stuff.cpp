@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <tuple>
 #include <unistd.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -23,7 +24,7 @@
 #define MAX_NAME_LENGTH 150
 
 
-char* read_program_text() {
+std::unique_ptr<char[]> read_program_text() {
     // Load program from file
     FILE *program_file = fopen(CL_PROGRAM_FILE, "r");
     if(program_file == NULL) {
@@ -33,9 +34,9 @@ char* read_program_text() {
     fseek(program_file, 0, SEEK_END);
     size_t program_size = ftell(program_file);
     rewind(program_file);
-    char *program_text = (char *) malloc((program_size + 1) * sizeof(char));
+    auto program_text = std::make_unique<char[]>(program_size + 1);
     program_text[program_size] = '\0';
-    fread(program_text, sizeof(char), program_size, program_file);
+    fread(program_text.get(), sizeof(char), program_size, program_file);
     fclose(program_file);
     return program_text;
 }
@@ -53,7 +54,7 @@ cl_device_id select_device() {
         exit(-1);
     }
 
-    char name[MAX_NAME_LENGTH];
+    // char name[MAX_NAME_LENGTH];
     // printf("Platforms:\n");
     // for(uint i=0;i<n_platforms;i++) 
     // {
@@ -101,19 +102,14 @@ cl_device_id select_device() {
     return device;
 }
 
-#define N 1024
-#define BLOCK_SIZE 16
-#define N_BLOCKS (N / BLOCK_SIZE)
-#define MATRIX_SIZE (N * N)
-#define MATRIX_MEM  (N * N * sizeof(float))
-
+/// Initializes and holds the OpenCL context, program and kernel, as well as a command queue
 struct ClContextEtc {
     cl_context context;
     cl_command_queue queue;
     cl_program program;
     cl_kernel kernel;
 
-    ClContextEtc(cl_device_id device, char *program_text, char *kernel_name) {
+    ClContextEtc(cl_device_id device, std::unique_ptr<char[]> program_text, char *kernel_name) {
         context = clCreateContext(0, 1, &device, NULL, NULL, NULL);
         if (!context)
         {
@@ -129,8 +125,10 @@ struct ClContextEtc {
             exit(-1);
         }
 
+        char* program_text1 = program_text.get(); 
+
         int err;
-        program = clCreateProgramWithSource(context, 1, (const char **) &program_text, NULL, &err);
+        program = clCreateProgramWithSource(context, 1, (const char **) &program_text1, NULL, &err);
         if(err < 0)
         {
             fprintf(stderr, "Failed to create program.\n");
@@ -170,7 +168,7 @@ struct ClBufferRepr {
     cl_mem mem;
 
     ClBufferRepr(cl_context context, cl_mem_flags flags, size_t size) {
-        mem = clCreateBuffer(context, CL_MEM_READ_ONLY, MATRIX_MEM, NULL, NULL);
+        mem = clCreateBuffer(context, CL_MEM_READ_ONLY, size, NULL, NULL);
         if(!mem)
         {
             fprintf(stderr, "Failed to allocate memory on device\n");
@@ -193,44 +191,32 @@ struct ClBufferRepr {
     }
 };
 
-int execute(cl_device_id device, char *program_text, char *kernel_name) {
-    ClContextEtc cl_ctx_etc(device, program_text, kernel_name);
-    
+#define BLOCK_SIZE 8
+
+void execute(ClContextEtc cl_ctx_etc, bool* start_board, uint board_height, uint board_width) {
     int err = 0;
 
-    // Daten auf dem Host vorbereiten
-    float *h_a = new float[MATRIX_MEM];
-    float *h_b = new float[MATRIX_MEM];
-    float *h_c = new float[MATRIX_MEM];
-    for(size_t i=0; i<MATRIX_SIZE;i++) 
-    {
-        h_a[i] = 2.0;
-        h_b[i] = 4.0;
-        h_c[i] = 0.0;
-    }
+    uint board_size = board_height * board_width;
+    uint board_mem_size = board_size * sizeof(bool);
 
-    // TODO actually replace with a working kernel instead of the modified matrixmul-example
+    // Daten auf dem Host vorbereiten
+    auto h_board = std::make_unique<bool[]>(board_mem_size);
+
+    memcpy(h_board.get(), start_board, board_mem_size);
 
     // Create array in device memory
-    ClBufferRepr d_a(cl_ctx_etc.context, CL_MEM_READ_ONLY, MATRIX_MEM);
-    ClBufferRepr d_b(cl_ctx_etc.context, CL_MEM_READ_ONLY, MATRIX_MEM);
-    ClBufferRepr d_c(cl_ctx_etc.context, CL_MEM_READ_WRITE, MATRIX_MEM);
+    ClBufferRepr d_board(cl_ctx_etc.context, CL_MEM_READ_WRITE, board_mem_size);
 
     // Copy data to device
-    d_a.write_mem(cl_ctx_etc.queue, MATRIX_MEM, h_a);
-    d_b.write_mem(cl_ctx_etc.queue, MATRIX_MEM, h_b);
-    d_c.write_mem(cl_ctx_etc.queue, MATRIX_MEM, h_c);
+    d_board.write_mem(cl_ctx_etc.queue, board_mem_size, h_board.get());
 
     // FIXME: potential issue caused by my removal of clFinish. I removed a few more above, but this here is a step before clEnqueueNDRangeKernel
     // Wait for transfers to finish
-    // clFinish(commands);
+    clFinish(cl_ctx_etc.queue);
     
     // Set the arguments to our compute kernel
-    err |= clSetKernelArg(cl_ctx_etc.kernel, 0, sizeof(cl_mem), &d_a);
-    err |= clSetKernelArg(cl_ctx_etc.kernel, 1, sizeof(cl_mem), &d_b);
-    err |= clSetKernelArg(cl_ctx_etc.kernel, 2, sizeof(cl_mem), &d_c);
-    err |= clSetKernelArg(cl_ctx_etc.kernel, 3, sizeof(float) * BLOCK_SIZE * BLOCK_SIZE, NULL);
-    err |= clSetKernelArg(cl_ctx_etc.kernel, 4, sizeof(float) * BLOCK_SIZE * BLOCK_SIZE, NULL);
+    err |= clSetKernelArg(cl_ctx_etc.kernel, 0, sizeof(cl_mem), &d_board);
+    err |= clSetKernelArg(cl_ctx_etc.kernel, 1, sizeof(bool) * BLOCK_SIZE * BLOCK_SIZE, NULL);
     if (err != CL_SUCCESS)
     {
         fprintf(stderr, "Failed to set kernel arguments!\n");
@@ -238,7 +224,7 @@ int execute(cl_device_id device, char *program_text, char *kernel_name) {
     }
 
     // Execute the kernel
-    size_t global_size[] = {N, N};
+    size_t global_size[] = {board_height, board_width};
     size_t local_size[] = {BLOCK_SIZE, BLOCK_SIZE};
     err = clEnqueueNDRangeKernel(cl_ctx_etc.queue, cl_ctx_etc.kernel, 2, NULL, global_size, local_size, 0, NULL, NULL);
     if (err)
@@ -249,10 +235,12 @@ int execute(cl_device_id device, char *program_text, char *kernel_name) {
 
     // FIXME: potential issue caused by my removal of clFinish.
     // Wait for the commands to get serviced before reading back results
-    // clFinish(commands);
+    clFinish(cl_ctx_etc.queue);
     
     // Copy Result Data Back
-    err = clEnqueueReadBuffer(cl_ctx_etc.queue, d_c.mem, CL_TRUE, 0, MATRIX_MEM, h_c, 0, NULL, NULL);
+    err = clEnqueueReadBuffer(cl_ctx_etc.queue, d_board.mem, CL_TRUE, 0, board_mem_size, h_board.get(), 0, NULL, NULL);
+    fprintf(stderr, "whatever1\n");
+
     if (err != CL_SUCCESS)
     {
         fprintf(stderr, "Failed to read from device array\n");
@@ -260,25 +248,27 @@ int execute(cl_device_id device, char *program_text, char *kernel_name) {
     }
     // Wait for transfer to finish
     clFinish(cl_ctx_etc.queue);
-
-    // Check Results
-    int errors = 0;
-    for(int i=0; i<MATRIX_SIZE;i++) {
-        if(fabs(h_c[i] - N * 2.0 * 4.0) > 0.0001) {
-            errors += 1;
-            printf("%d %f %f %f\n", i, h_c[i], h_a[i], h_b[i]);
-        }
-    }
-
-    delete[] h_a;
-    delete[] h_b;
-    delete[] h_c;
-    return errors;
+    fprintf(stderr, "whatever1\n");
 }
 
 void test() {
-    char* program_text = read_program_text();
+    auto program_text = read_program_text();
     auto device = select_device();
 
-    execute(device, program_text, KERNEL_NAME);
+    ClContextEtc cl_ctx_etc(device, std::move(program_text), KERNEL_NAME);
+    uint board_height = 16;
+    uint board_width = 16;
+
+    auto start_field = std::make_unique<bool[]>(board_height * board_width);
+    // ouch, that wouldve been nicer written manually...
+    std::tuple<int, int> glider_pos[] = {
+        std::make_tuple(1,2), std::make_tuple(2,3), std::make_tuple(3,1), std::make_tuple(3,2), std::make_tuple(3,3)
+    };
+    for (auto position: glider_pos) {
+        start_field[std::get<0>(position) + board_width * std::get<1>(position)] = true;
+    }
+
+    execute(cl_ctx_etc, start_field.get(), 16, 16);
+    fprintf(stderr, "whatever1\n");
+
 }

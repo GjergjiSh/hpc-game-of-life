@@ -5,7 +5,7 @@
 #include <iostream>
 
 int main(int argc, char* argv[])
-{
+{   
     test();
     return 0;
     // std::cout << "Optimized Game of Life" << std::endl;
