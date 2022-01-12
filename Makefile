@@ -84,7 +84,10 @@ bench: all
 clean:
 	rm -f -v $(OPT_OBJ) $(UNOPT_OBJ) $(ALL_EXECUTABLES)
 
+# how to integrate bibtex?
 Abgabe.pdf: docs/Abgabe.tex docs/imgs/*
+	cd docs && xelatex --output-directory=out Abgabe.tex 2> /dev/null
+	cd docs && xelatex --output-directory=out Abgabe.tex 2> /dev/null
 	cd docs && xelatex --output-directory=out Abgabe.tex 2> /dev/null
 	cp docs/out/Abgabe.pdf .
 
