@@ -1,4 +1,5 @@
 #include "optimized/GameOfLife.h"
+#include "optimized/opencl-stuff.h"
 #include "common/Patterns.h"
 #include "common/Timing.h"
 #include <iostream>
@@ -14,7 +15,7 @@ int main(int argc, char* argv[])
     board_t board;
     board.rows = std::stoi(argv[1]);
     board.cols = std::stoi(argv[2]);
-    board.length = board.rows * board.rows;
+    board.length = board.rows * board.cols;
     board.cells = new unsigned char[board.length];
 
     // Current state of the board (cells) is copied into the temp_board at next state generation
@@ -26,8 +27,8 @@ int main(int argc, char* argv[])
 
     size_t single_cell_size = sizeof(*board.cells);
     size_t cell_array_size = board.length * single_cell_size;
-    std::cout << "Size of each cell is " << single_cell_size << "bytes" << std::endl;
-    std::cout << "Size of the entire array is " <<  cell_array_size << "bytes" << std::endl;
+    // std::cout << "Size of each cell is " << single_cell_size << "bytes" << std::endl;
+    // std::cout << "Size of the entire array is " <<  cell_array_size << "bytes" << std::endl;
 
     //Initialize everything to 0
     memset(board.cells, 0, cell_array_size);
@@ -38,9 +39,9 @@ int main(int argc, char* argv[])
     int generations = std::stoi(argv[3]);
     int display = std::stoi(argv[4]);
 
-    std::cout << "Generating " << generations << " iterations of Game of Life" << std::endl;
+    // std::cout << "Generating " << generations << " iterations of Game of Life" << std::endl;
 
-    TimedScope optimized_gol_timer("Optimized game of life timer");
+    TimedScope optimized_gol_timer("Optimized GoL timer");
     game_of_life_loop(board, temp_board, generations, display, verbose);
 
     delete[] board.cells;

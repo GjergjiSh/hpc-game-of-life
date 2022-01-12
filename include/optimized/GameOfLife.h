@@ -22,6 +22,7 @@ These rules, which compare the behavior of the automaton to real life, can be co
 #include <iostream>
 #include <ctime>
 #include <string.h>
+#include <sys/types.h>
 
 typedef struct
 {

@@ -53,6 +53,7 @@ dkms.conf
 
 # IDE
 .vscode
+compile_flags.txt
 
 .DS_Store
 

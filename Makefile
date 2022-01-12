@@ -8,10 +8,10 @@ UNOPT_OBJ:=$(patsubst %.cpp, %.unopt.o, $(SRC))
 OPT_OBJ:=$(patsubst %.cpp, %.opt.o, $(SRC))
 
 # The cpp-compiler with the default flags we always provide
-BASE_CC = g++ -std=c++17 $(INC_PATH) -Wno-write-strings -Wall -DNDEBUG
+BASE_CC = g++ -std=c++17 -fopenmp $(INC_PATH) -Wno-write-strings -Wall -DNDEBUG -Wno-deprecated-declarations
 
 UNOPT_CC = $(BASE_CC)
-OPT_CC = $(BASE_CC) -fopenmp -O3
+OPT_CC = $(BASE_CC) -O3
 
 # The rules to generate the optimized and unoptimized object files
 $(UNOPT_OBJ): %.unopt.o: %.cpp
@@ -20,12 +20,13 @@ $(UNOPT_OBJ): %.unopt.o: %.cpp
 $(OPT_OBJ): %.opt.o: %.cpp
 	$(OPT_CC) -c $< -o $@
 
-BASE_LD = g++ -DNDEBUG -Wl,--no-as-needed
+BASE_LD = g++ -fopenmp -DNDEBUG -Wl,--no-as-needed -lOpenCL
 UNOPT_LD = $(BASE_LD)
 OPT_LD = $(BASE_LD) -O3
 
 # The dependencies of the manually optimized or not GameOfLife
 MO_GoL_DEPS = common/Timing optimized/GameOfLife optimized/Main
+CL_GoL_DEPS = common/Timing opencl/GameOfLife
 MU_GoL_DEPS = common/Timing unoptimized/GameOfLife unoptimized/Main
 
 # TODO DOC
@@ -45,21 +46,34 @@ MU_CU_OBJ = $(patsubst %, src/%.unopt.o, $(MU_GoL_DEPS))
 GameOfLife.mu.cu.out: $(MU_CU_OBJ)
 	$(UNOPT_LD) -o GameOfLife.mu.cu.out $(MU_CU_OBJ)
 
+CL_OBJ = $(patsubst %, src/%.opt.o, $(CL_GoL_DEPS))
+GameOfLife.cl.out: $(CL_OBJ)
+	$(OPT_LD) -o GameOfLife.cl.out $(CL_OBJ)
+
 # All executables we generate in the end
-ALL_EXECUTABLES = GameOfLife.mo.co.out GameOfLife.mu.co.out GameOfLife.mo.cu.out GameOfLife.mu.cu.out
+ALL_EXECUTABLES = GameOfLife.mo.co.out GameOfLife.mu.co.out GameOfLife.mo.cu.out GameOfLife.mu.cu.out GameOfLife.cl.out
 
 all: $(ALL_EXECUTABLES)
 
+echo_smt:
+	@echo $(CL_OBJ)
+
 # arguments for the executables
-CMD_ARGS = 50 50 3000 0
+CMD_ARGS = 128 128 100000 0
 
 # Execute all executables to compare them
 .PHONY: bench
 bench: all
+	@echo -e "\nManuell optimiert, compiler optimiert"
 	./GameOfLife.mo.co.out $(CMD_ARGS)
+	@echo -e "\nManuell unoptimiert, compiler optimiert"
 	./GameOfLife.mu.co.out $(CMD_ARGS)
+	@echo -e "\nManuell optimiert, compiler unoptimiert"
 	./GameOfLife.mo.cu.out $(CMD_ARGS)
+	@echo -e "\nManuell unoptimiert, compiler unoptimiert"
 	./GameOfLife.mu.cu.out $(CMD_ARGS)
+	@echo -e "\nWith OpenCL"
+	./GameOfLife.cl.out $(CMD_ARGS)
 
 .PHONY: clean
 clean:
