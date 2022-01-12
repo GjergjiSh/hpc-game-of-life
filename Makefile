@@ -27,6 +27,7 @@ OPT_LD = $(BASE_LD) -O3
 # The dependencies of the manually optimized or not GameOfLife
 MO_GoL_DEPS = common/Timing optimized/GameOfLife optimized/Main
 CL_GoL_DEPS = common/Timing opencl/GameOfLife
+OMP_VER_GoL_DEPS = common/Timing openmp-variant/GameOfLife
 MU_GoL_DEPS = common/Timing unoptimized/GameOfLife unoptimized/Main
 
 # TODO DOC
@@ -50,35 +51,39 @@ CL_OBJ = $(patsubst %, src/%.opt.o, $(CL_GoL_DEPS))
 GameOfLife.cl.out: $(CL_OBJ)
 	$(OPT_LD) -o GameOfLife.cl.out $(CL_OBJ)
 
+OMP_VER_OBJ = $(patsubst %, src/%.opt.o, $(OMP_VER_GoL_DEPS))
+GameOfLife.omp_ver.out: $(OMP_VER_OBJ)
+	$(OPT_LD) -o GameOfLife.omp_ver.out $(OMP_VER_OBJ)
+
 # All executables we generate in the end
-ALL_EXECUTABLES = GameOfLife.mo.co.out GameOfLife.mu.co.out GameOfLife.mo.cu.out GameOfLife.mu.cu.out GameOfLife.cl.out
+ALL_EXECUTABLES = GameOfLife.mo.co.out GameOfLife.mu.co.out GameOfLife.mo.cu.out GameOfLife.mu.cu.out GameOfLife.cl.out GameOfLife.omp_ver.out
 
 all: $(ALL_EXECUTABLES)
 
-echo_smt:
-	@echo $(CL_OBJ)
-
 # arguments for the executables
-CMD_ARGS = 64 64 100000 0 1
-CMD_ARGS_OMP = 64 64 100000 0 0
+FIELD_AND_GENS = 64 64 100000
+CMD_ARGS = $(FIELD_AND_GENS) 0 1
+CMD_ARGS_OMP = $(FIELD_AND_GENS) 0 0
 
 # Execute all executables to compare them
 .PHONY: bench
 bench: all
-	@echo -e "\nManuell unoptimiert, compiler optimiert, seriell"
-	./GameOfLife.mu.co.out $(CMD_ARGS)
+	# @echo -e "\nManuell unoptimiert, compiler optimiert, seriell"
+	# ./GameOfLife.mu.co.out $(CMD_ARGS)
 	@echo -e "\nManuell unoptimiert, compiler optimiert, parallel"
-	./GameOfLife.mu.co.out $(CMD_ARGS_OMP)
+	./GameOfLife.mu.co.out $(CMD_ARGS_OMP) 
 	#@echo -e "\nManuell unoptimiert, compiler unoptimiert, seriell"
 	#./GameOfLife.mu.cu.out $(CMD_ARGS)
 	#@echo -e "\nManuell unoptimiert, compiler unoptimiert, parallel"
 	#./GameOfLife.mu.cu.out $(CMD_ARGS_OMP)
-	@echo -e "\nManuell optimiert, compiler unoptimiert"
-	./GameOfLife.mo.cu.out $(CMD_ARGS)
+	# @echo -e "\nManuell optimiert, compiler unoptimiert"
+	# ./GameOfLife.mo.cu.out $(CMD_ARGS)
 	@echo -e "\nManuell optimiert, compiler optimiert"
 	./GameOfLife.mo.co.out $(CMD_ARGS)
 	@echo -e "\nWith OpenCL"
 	./GameOfLife.cl.out $(CMD_ARGS)
+	@echo -e "\nWith OMP VER"
+	./GameOfLife.omp_ver.out $(CMD_ARGS)
 
 .PHONY: clean
 clean:
