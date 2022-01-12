@@ -1,3 +1,4 @@
+#include <exception>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,7 +13,7 @@
 #ifdef __APPLE__
 #include <OpenCL/opencl.h>
 #else
-#define CL_TARGET_OPENCL_VERSION 220
+#define CL_TARGET_OPENCL_VERSION 300
 #include <CL/cl.h>
 #endif
 
@@ -176,6 +177,12 @@ struct ClBufferRepr {
         }
     }
 
+    // ClBufferRepr(ClBufferRepr &) = default;
+    // ClBufferRepr& operator=(ClBufferRepr &) = default;
+
+    // ClBufferRepr(ClBufferRepr const&) = delete;
+    // ClBufferRepr& operator=(ClBufferRepr const&) = delete;
+    
     void write_mem(cl_command_queue queue, size_t size, void* src) {
         // FIXME: Potential performance improvement with non-blocking write
         int err = clEnqueueWriteBuffer(queue, mem, CL_TRUE, 0, size, src, 0, NULL, NULL);
@@ -193,7 +200,7 @@ struct ClBufferRepr {
 
 #define BLOCK_SIZE 8
 
-void execute(ClContextEtc cl_ctx_etc, bool* start_board, uint board_height, uint board_width) {
+void execute(ClContextEtc& cl_ctx_etc, bool* start_board, uint board_height, uint board_width) {
     int err = 0;
 
     uint board_size = board_height * board_width;
@@ -212,11 +219,13 @@ void execute(ClContextEtc cl_ctx_etc, bool* start_board, uint board_height, uint
 
     // FIXME: potential issue caused by my removal of clFinish. I removed a few more above, but this here is a step before clEnqueueNDRangeKernel
     // Wait for transfers to finish
-    clFinish(cl_ctx_etc.queue);
+    // clFinish(cl_ctx_etc.queue);
     
     // Set the arguments to our compute kernel
+    // source memory
     err |= clSetKernelArg(cl_ctx_etc.kernel, 0, sizeof(cl_mem), &d_board);
-    err |= clSetKernelArg(cl_ctx_etc.kernel, 1, sizeof(bool) * BLOCK_SIZE * BLOCK_SIZE, NULL);
+    // workgroup copy for caching of reads (2 larger in each dimension for reads to the border)
+    err |= clSetKernelArg(cl_ctx_etc.kernel, 1, sizeof(bool) *  (2 + BLOCK_SIZE) * (2 + BLOCK_SIZE), NULL);
     if (err != CL_SUCCESS)
     {
         fprintf(stderr, "Failed to set kernel arguments!\n");
@@ -235,11 +244,10 @@ void execute(ClContextEtc cl_ctx_etc, bool* start_board, uint board_height, uint
 
     // FIXME: potential issue caused by my removal of clFinish.
     // Wait for the commands to get serviced before reading back results
-    clFinish(cl_ctx_etc.queue);
+    // clFinish(cl_ctx_etc.queue);
     
     // Copy Result Data Back
     err = clEnqueueReadBuffer(cl_ctx_etc.queue, d_board.mem, CL_TRUE, 0, board_mem_size, h_board.get(), 0, NULL, NULL);
-    fprintf(stderr, "whatever1\n");
 
     if (err != CL_SUCCESS)
     {
@@ -248,7 +256,7 @@ void execute(ClContextEtc cl_ctx_etc, bool* start_board, uint board_height, uint
     }
     // Wait for transfer to finish
     clFinish(cl_ctx_etc.queue);
-    fprintf(stderr, "whatever1\n");
+    fprintf(stdout, "%d\n", h_board[0]);
 }
 
 void test() {
@@ -259,16 +267,15 @@ void test() {
     uint board_height = 16;
     uint board_width = 16;
 
+    // dont want conditionals in every workitem, cant figure out another way
+    if (board_width % BLOCK_SIZE != 0 || board_height % BLOCK_SIZE != 0) throw std::exception();
+
     auto start_field = std::make_unique<bool[]>(board_height * board_width);
-    // ouch, that wouldve been nicer written manually...
-    std::tuple<int, int> glider_pos[] = {
-        std::make_tuple(1,2), std::make_tuple(2,3), std::make_tuple(3,1), std::make_tuple(3,2), std::make_tuple(3,3)
-    };
-    for (auto position: glider_pos) {
-        start_field[std::get<0>(position) + board_width * std::get<1>(position)] = true;
-    }
+    start_field[1 + board_width * 2] = true;
+    start_field[2 + board_width * 3] = true;
+    start_field[3 + board_width * 1] = true;
+    start_field[3 + board_width * 2] = true;
+    start_field[3 + board_width * 3] = true;
 
     execute(cl_ctx_etc, start_field.get(), 16, 16);
-    fprintf(stderr, "whatever1\n");
-
 }

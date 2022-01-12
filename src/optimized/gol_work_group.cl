@@ -1,55 +1,49 @@
 #define BLOCK_SIZE 8
 
-__kernel void game_of_life_split(
-    __global bool* b,
-    __local bool* a_block
+/// fixes modulo for the purposes of this file (maximally negative the modulo range). Also may whoever decided Cs modulo behavior was right like it is suffer...
+int fixed_modulo(int val, int mod) {
+    return (val + mod) % mod;
+}
+
+kernel void game_of_life_split(
+    global bool* board,
+    local bool* group_board
 )
 {
-    // b[0] = true;
-    // TODO actually replace with a working kernel instead of the matrixmul-example
-    // int y = get_global_id(0);
-    // int x = get_global_id(1);
-    // int ylocal = get_local_id(0);
-    // int xlocal = get_local_id(1);
+    int y = get_global_id(0);
+    int x = get_global_id(1);
 
-    // int yblock = get_group_id(0);
-    // int xblock = get_group_id(1);
+    int y_width = get_global_size(0);
+    int x_width = get_global_size(1);
+    int tot_size = y_width * x_width;
 
-    // float tmp = 0.0;
-    // for(int kblock = 0; kblock < N_BLOCKS; kblock++)
-    // {
-    //     // Cache in local memory a and b values of current block
-    //     // Cache for whole work group
-    //     // Each work item reads exactly 1 value of a and b
-    //     // To differentiate take local id
+    // int y_group = get_group_id(0);
+    // int x_group = get_group_id(1);
 
-    //     // Block for a: starts at:
-    //     // rows/y: same as c -> yblock
-    //     // cols/x: same as k -> kblock
-    //     // Starting adress of block for
-    //     int abase = yblock * BLOCK_SIZE * N + kblock * BLOCK_SIZE;
-    //     // Add to that local position in global memory:
-    //     int local_global = ylocal * N + xlocal;
-    //     // Store to local position in local memory
-    //     int local_local = ylocal * BLOCK_SIZE + xlocal;
-    //     a_block[local_local] = a[abase + local_global];
-    //     // Block for b: starts at:
-    //     // rows/y: same as k -> kblock
-    //     // cols/x: same as c -> xblock
-    //     // Starting adress of block for
-    //     int bbase = kblock * BLOCK_SIZE * N + xblock * BLOCK_SIZE;
-    //     // Add to that local position (same as before):
-    //     b_block[local_local] = b[bbase + local_global];
+    int y_local = get_local_id(0);
+    int x_local = get_local_id(1);
 
-    //     // Wait that all work items are done caching
-    //     barrier(CLK_LOCAL_MEM_FENCE);
-    //     #pragma unroll
-    //     for (int k = 0; k < BLOCK_SIZE; k++)
-    //     {
-    //         tmp += a_block[ylocal * BLOCK_SIZE + k] * b_block[k * BLOCK_SIZE + xlocal];
-    //     } 
-    //     // Wait again for all work items before we overwrite cache in next iteration
-    //     barrier(CLK_LOCAL_MEM_FENCE);
-    // }
-    // c[y * N + x] += tmp;
+    // write the value to the local cache
+    group_board[(1 + y_local) * BLOCK_SIZE + (x_local + 1)] = board[y * y_width + x];
+    // also the borders
+    if (y_local == 0) group_board[x_local + 1] = board[fixed_modulo((y - 1) * y_width + x, tot_size)]; // lower border
+    else if (y_local == (BLOCK_SIZE - 1)) group_board[(1 + BLOCK_SIZE) * BLOCK_SIZE + (x_local + 1)] = board[fixed_modulo((y + 1) * y_width + x, tot_size)]; // upper border
+    else if (x_local == 0) group_board[(1 + y_local) * BLOCK_SIZE] = board[fixed_modulo(y * y_width + x - 1, tot_size)]; // left border except corners
+    else if (x_local == (BLOCK_SIZE - 1)) group_board[(1 + y_local) * BLOCK_SIZE + BLOCK_SIZE + 1] = board[fixed_modulo(y * y_width + x + 1, tot_size)]; // right border except corners
+
+    barrier(CLK_LOCAL_MEM_FENCE);
+
+    int nb_count =
+    group_board[(y_local    ) * BLOCK_SIZE + (x_local)] + group_board[(y_local    ) * BLOCK_SIZE + (x_local + 1)] + group_board[(y_local    ) * BLOCK_SIZE + (x_local + 2)] +
+    group_board[(y_local + 1) * BLOCK_SIZE + (x_local)] +                                                           group_board[(y_local + 1) * BLOCK_SIZE + (x_local + 2)] +
+    group_board[(y_local + 2) * BLOCK_SIZE + (x_local)] + group_board[(y_local + 2) * BLOCK_SIZE + (x_local + 1)] + group_board[(y_local + 2) * BLOCK_SIZE + (x_local + 2)];
+
+    bool was_alive = group_board[(y_local + 1) * BLOCK_SIZE + (x_local + 1)];
+    bool would_stay_alive = 2 <= nb_count && nb_count <= 3;
+    bool would_gain_live = nb_count == 3;
+
+    bool is_alive_now = was_alive ? would_stay_alive : would_gain_live;
+
+    barrier(CLK_GLOBAL_MEM_FENCE);
+    board[y * y_width + x] = is_alive_now;
 }
