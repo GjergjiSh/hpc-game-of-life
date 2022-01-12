@@ -25,7 +25,7 @@ UNOPT_LD = $(BASE_LD)
 OPT_LD = $(BASE_LD) -O3
 
 # The dependencies of the manually optimized or not GameOfLife
-MO_GoL_DEPS = common/Timing optimized/GameOfLife optimized/Main optimized/opencl-stuff
+MO_GoL_DEPS = common/Timing optimized/GameOfLife optimized/Main
 MU_GoL_DEPS = common/Timing unoptimized/GameOfLife unoptimized/Main
 
 # TODO DOC

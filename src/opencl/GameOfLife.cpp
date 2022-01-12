@@ -18,7 +18,7 @@
 #endif
 
 // path relative to the makefile where the programm gets executed from 
-#define CL_PROGRAM_FILE "src/optimized/gol_work_group.cl"
+#define CL_PROGRAM_FILE "src/opencl/gol_work_group.cl"
 // has to be the name of the choosen kernel inside the cl file 
 #define KERNEL_NAME "game_of_life_split"
 #define MAX_SELECTIONS 10
@@ -274,7 +274,7 @@ void execute(ClContextEtc& cl_ctx_etc, bool* start_board, uint board_height, uin
     fprintf(stdout, "%d\n", h_board[0]);
 }
 
-void test() {
+int main() {
     auto program_text = read_program_text();
     auto device = select_device();
 
