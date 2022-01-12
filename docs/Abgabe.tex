@@ -151,7 +151,7 @@
 \title{Abschlussprojekt}
 \author{
   \textbf{\group:} \\
-  Gjergji Shkurti, XXXX\\
+  Gjergji Shkurti, 357059\\
   Samuel Maier, 1002330
 }
 \date{\today}
@@ -258,6 +258,13 @@ Note that it is important to make a copy of the current board state and calculat
 
 \begin{lstlisting}[caption={Naive State Generation Algorithm},label={lst:gol-naive-generation-algorithm},language=C++]
 
+int generate_cell_state(int row, int col, board_t& board){
+    int cell_neighbour_count = get_neighbour_count(row, col, board);
+    int cell_survives = board.cell_rows.at(row).at(col) && (cell_neighbour_count == 2 || cell_neighbour_count == 3);
+    int cell_birth = !board.cell_rows.at(row).at(col) && (cell_neighbour_count == 3);
+    return cell_survives || cell_birth;
+}
+
 void generate_next_board_state(board_t& current_board_state) {
     //Store current board state to avoid overriding during cell state generation
     board_t temp = current_board_state;
@@ -266,10 +273,7 @@ void generate_next_board_state(board_t& current_board_state) {
         // Loop through cols
         for (int col = 0; col < current_board_state.col_nr; col++) {
         	//Generate cell State
-        	int cell_neighbour_count = get_neighbour_count(row, col, board);
-    		int cell_survives = temp.cell_rows.at(row).at(col) && (cell_neighbour_count == 2 || cell_neighbour_count == 3);
-    		int cell_birth = !temp.cell_rows.at(row).at(col) && (cell_neighbour_count == 3);
-            current_board_state.cell_rows.at(row).at(col) = cell_survives || cell_birth;
+        		current_board_state.cell_rows.at(row).at(col) = generate_cell_state(row, col, temp);
         }
     }
 }
@@ -279,13 +283,12 @@ void generate_next_board_state(board_t& current_board_state) {
 
 The main benefit of this naive implementation of Game of Life is that it is fairly easy to parallelize as computing the value of a cell in the current generation does not depend on the computations of the neighbouring cells. Each thread is only responsible for reading the data of a particular board area and. All parallel threads read the current board state from the copy of the board mentioned above but none of them write in the same area of memory. This means that there is no need for synchronization between the threads and therefore no performance hits are incurred due to synchronization related overhead. Thus, OpenMP can be used to easily parallelize the naive state generation algorithm as seen in listing \ref{lst:gol-parallel-naive-generation-algorithm} \breakln
 
-Table \ref{tab:openmp-parallelisation} provides an overview of the performance difference between serial and parallel implementations of the naive algorithm with different board sizes. One noticable phenomenon is that with smaller board sizes the parallel implementation is slower than the serial one. This is to be expected as there is an overhead associated with setting up the threads. With smaller board sizes, the performance gained from dividng the work between mutltiple threads is overshadowed by the performance hit incurred due to the overhead associated with creating and managing the threads. That being said, there is a noticable performance increase with larger board sizes. For instance, with a board size of 256x256 the parallel implementation of the algorithm is over 4 times faster than the serial one. \breakln
+Table \ref{tab:openmp-parallelisation} provides an overview of the performance difference between serial and parallel implementations (12 threads) of the naive algorithm with different board sizes. One noticable phenomenon is that with smaller board sizes the parallel implementation is slower than the serial one. This is to be expected as there is an overhead associated with setting up the OpenMP runtime library as well as creating and manaing threads. That being said, there is a noticable performance increase with larger board sizes. For instance, with a board size of 256x256 the parallel implementation of the algorithm is over 4 times faster than the serial one. \breakln
 
 \begin{lstlisting}[caption={Parallel Naive State Generation Algorithm},label={lst:gol-parallel-naive-generation-algorithm},language=C++]
 void game_of_life_loop_omp(board_t& board, board_t& temp, int generations, int display)
 {
-    int num_threads;
-#pragma omp parallel
+#pragma omp parallel num_threads(12)
     {
         num_threads = omp_get_num_threads();
         for (int gen = 0; gen < generations; gen++) {
@@ -309,7 +312,6 @@ void game_of_life_loop_omp(board_t& board, board_t& temp, int generations, int d
 #pragma omp barrier
         }
     }
-    std::cout << "Number of threads: " << num_threads << std::endl;
 }
 \end{lstlisting}
 
@@ -351,13 +353,69 @@ void game_of_life_loop_omp(board_t& board, board_t& temp, int generations, int d
 
 \pagebreak
 
+\subsubsection{Limiting Factors - Cache Performance}
+
+One limiting factor of the naive implementation is the rather poor cache performance. In Linux, cache misses can be measured by using the perf tool\footnote{placeholder} (sudo perf stat -e cache-misses <executable>). Table \ref{tab:naive-cache-misses} provides an overview of the cache misses incurred when running 100000 iterations of the naive Game of Life algorithm with different board sizes.
+
+\begin{table}
+\centering
+\begin{tabular}{|l|l|l|l|l|} 
+\hline
+\begin{tabular}[c]{@{}l@{}}\\\\Implementation\end{tabular} & OpenMP & \begin{tabular}[c]{@{}l@{}}Board \\Width\end{tabular} & \begin{tabular}[c]{@{}l@{}}Board \\Height\end{tabular} & \begin{tabular}[c]{@{}l@{}}Cache\\Misses\end{tabular} \\ 
+\hline
+1 & No & 10 & 10 & 79.991 \\ 
+\hline
+2 & Yes & 10 & 10 & 163.411 \\ 
+\hline
+3 & No & 16 & 16 & 86.777 \\ 
+\hline
+4 & Yes & 16 & 16 & 145.101 \\ 
+\hline
+5 & No & 32 & 32 & 108.933 \\ 
+\hline
+6 & Yes & 32 & 32 & 246.994 \\ 
+\hline
+7 & No & 64 & 64 & 456.090 \\ 
+\hline
+8 & Yes & 64 & 64 & 489.796 \\ 
+\hline
+9 & No & 128 & 128 & 2.469.975 \\ 
+\hline
+10 & Yes & 128 & 128 & 2.207.427 \\ 
+\hline
+11 & No & 256 & 256 & 6.855.352 \\ 
+\hline
+12 & Yes & 256 & 256 & 6.913.343 \\
+\hline
+\end{tabular}
+\caption{Naive Algorithm Cache Misses}
+\label{tab:naive-cache-misses}
+\end{table}
+
+\pagebreak
+
+\subsubsection{Limiting Factors - Memory Bottleneck}
+
+When analyzing the performance of the naive implementation using the Roofline Model\footnote{placeholder}, it becomes apparent that the implementation is primarily memory bound. A lot of time is spent allocating vectors (see blue boxes in figure \ref{fig:roofline-naive-32-100k}. One can also see that the largest bottleneck of the algorithm itself is the \textbf{$cell{\_}state{\_}at(int{\ }row,{\ }int{\ }col,{\ }board{\_}t{\&}{\ } board)$} (1st red box in figure \ref{fig:roofline-naive-32-100k} method which is reponsible for looking up the eight neighbouring cells of the selected cell. This particular way of looking up the neighbouring cells in the two dimensional vector is very cache inefficient as evidenced by the cache misses discussed in the previous subsection of this document. As we are memory bound and not compute bound, the benefit of parallelizing the algorithm is greatly reduced as is evidenced by the fact that the speedup factor depicted in table \ref{tab:openmp-parallelisation} plateaus after increasing the board size from 128x128 to 256x256.
+
+\begin{figure}[tbh!]
+	\centering
+	\includegraphics[width=16cm]{imgs/roofline-naive-32-100k.png}
+	\caption{Roofline Analysis Results - Naive - Serial}
+	\label{fig:roofline-naive-32-100k}
+\end{figure}
+
+\pagebreak
+
 \subsection{Optimized Implementation}
 
-As previously mentioned, the naive algorithm is easy to parallelize and therefore suitable for a framework such as OpenMP. However, the algorithm itself is rather inefficient and the datastructure used to represent the board-relevant data is a significant performance bottleneck. In this chapter, an optimized version of the algorithm and a better way of representing the cell-relevant data to increase cache performance are discussed.
+As previously mentioned, the naive algorithm is easy to parallelize and therefore suitable for a framework such as OpenMP. However, the algorithm itself is rather inefficient in regards to memory and cache optimizations and as such can only benefit so much from being parallelized. In this chapter, an optimized version of the algorithm and a better way of representing the cell-relevant data to increase cache performance are discussed.
 
 \subsubsection{Optimized Data Representation}
 
-Another approach to solving the state generation problem is to encode both the cell state and the number of living neighbours a cell has into a single data structure. Then, when manipulating the state of a cell, one can accordingly increment or decrement the number of living neighbours for each of the surrounding cell. Lets consider cell-relevant data. A cell has a state (dead/alive) which can be encoded into a single bit (1/0). It can have a minimum of 0 living neighbours and a maximum of 8, which can be represented by using only 4 bits. So, to store all relevant cell data, we need a total of 5 bits. In C++, the smallest data types are \textbf{bool} and \textbf{char} which are both 1 byte or 8 bits. Whilst it is impossible to store the cell-relevant data into a bool, we can store all cell-relevant data in the first 5 bits of an unsigned char\footnote{placeholder}, as it can also contain numbers (see figure \ref{fig:cell-state}). Keeping this in mind, we can store the state of all cells of the board into a one dimensional array of unsigned chars. Listing \ref{lst:gol-optimized-datastructure} depicts the optimized structure of storing all board-relevant data.
+Another approach to solving the state generation problem is to encode both the cell state and the number of living neighbours a cell has into a single data structure. Then, when manipulating the state of a cell, one can accordingly increment or decrement the number of living neighbours for each of the surrounding cell. Lets consider cell-relevant data. A cell has a state (dead/alive) which can be encoded into a single bit (1/0). It can have a minimum of 0 living neighbours and a maximum of 8, which can be represented by using only 4 bits. So, to store all relevant cell data, we need a total of 5 bits. In C++, the smallest data types are \textbf{bool} and \textbf{char} which are both 1 byte or 8 bits. Whilst it is impossible to store the cell-relevant data into a bool, we can store all cell-relevant data in the first 5 bits of an unsigned char\footnote{placeholder}, as it can also contain numbers (see figure \ref{fig:cell-state}). Keeping this in mind, we can store the state of all cells of the board into a one dimensional array of unsigned chars. In this way, we greatly reduce the ammount of memory needed to store our board states compared to the previous naive implementation. A 256x256 board in the old representation would be 4 times larger than the same board size represented in the new data structure. Listing \ref{lst:gol-optimized-datastructure} depicts the optimized structure of storing all board-relevant data.
+
+\pagebreak
 
 \begin{lstlisting}[caption={Parallel Naive State Generation Algorithm},label={lst:gol-optimized-datastructure},language=C++]
 
@@ -382,7 +440,14 @@ typedef struct
 
 As shown in figure \ref{fig:cell-state}, a dead cell with no alive neighbours is simply a 0 byte. These cells can never change their state. We can skip applying the rules of the game to all cells that fulfill the requirement of being 0 bytes. This has two benefits: Firstly, our algorithm gains a significant performance increase as it can simply access the cell via a pointer and check whether the dereferenced value of the pointer is 0. If that is the case, it can skip analyzing the cell and move on to its neighbour. Secondly, the overall state of the game of life tends to reach a balancing point. This means, on a randomly initialized board, the further we are in our iterations, the larger the number of dead cells without any living neighbours is. This means that the performance gain becomes increasingly larger the further we are in our iterations. \breakln
 
-Listing \ref{lst:gol-optimized-manipulation} depicts the method for setting the cell of a state to dead and deincrementing the neighbour counts of its surrounding neighbours. Bitwise manipulation is used to set the intial bit of the unsigned char representing the cell data to 0. Then, bitwise manipulation is used to remove one to the neighbour count of each of the cells 8 neighbours. Setting the cell state to alive is similar. The only difference is that the first bit is set to 1 ($*(cell_ptr) |= 0x01$)  and the count of each neighbour is incremented by one ($*(cell_ptr + y + x) += 0x02$). @TODO!!.
+\begin{figure}[tbh!]
+	\centering
+	\includegraphics[width=16cm]{imgs/cell-algo.png}
+	\caption{Optimized Generation Algorithm}
+	\label{fig:cell-algo}
+\end{figure}
+
+Listing \ref{lst:gol-optimized-manipulation} depicts the method for setting the cell of a state to dead and deincrementing the neighbour counts of its surrounding neighbours. Bitwise manipulation is used to set the intial bit of the unsigned char representing the cell data to 0. Then, bitwise manipulation is used to remove one to the neighbour count of each of the cells 8 neighbours. Setting the cell state to alive is similar. The only difference is that the first bit is set to 1 ($*(cell_ptr) |= 0x01$)  and the count of each neighbour is incremented by one ($*(cell_ptr + y + x) += 0x02$).
 
 \begin{lstlisting}[caption={Parallel Naive State Generation Algorithm},label={lst:gol-optimized-manipulation},language=C++]
 
@@ -407,6 +472,8 @@ void kill_cell(board_t& board, const u_int& row, const u_int& col) {
 }
 \end{lstlisting}
 
+Listing \ref{lst:gol-optimized-algo} depitcs the optimized state generation algorithm. As previously discussed, we initially check if the selected cell is a 0 byte and if that is the case, we skip the application of the rules. If the requirement for skipping is not fulfilled, the alive neighbour count of the cell is acquired by using a bitwise shift operation on the unsigned char representing the cell-relevant data. If the data of the unsigned char is shifted by one to the right, the state bit becomes a carry bit. Therefore, the only remaining data in the unsigned char are the 4 bits representing the alive neighbour count of the selected cell. Depending on this number, we apply the rules of the game to the cell and update all neighbouring cells accordingly.
+
 \begin{lstlisting}[caption={Parallel Naive State Generation Algorithm},label={lst:gol-optimized-algo},language=C++]
 void generate_next_board_state(board_t& board, board_t& temp_board) {
     memcpy(temp_board.cells, board.cells, board.length);
@@ -427,7 +494,7 @@ void generate_next_board_state(board_t& board, board_t& temp_board) {
             // // kill the cell
             kill_cell(board, col, row);
         } else {
-            // cell only gains life when it has precisely 3 neibors
+            // cell only gains life when it has precisely 3 neighbours
             if (nb_count != 3)
                 continue;
             u_int col = index % board.rows;
@@ -438,12 +505,32 @@ void generate_next_board_state(board_t& board, board_t& temp_board) {
 }
 \end{lstlisting}
 
-\begin{figure}[tbh!]
-	\centering
-	\includegraphics[width=16cm]{imgs/cell-algo.png}
-	\caption{Optimized Generation Algorithm}
-	\label{fig:cell-algo}
-\end{figure}
+\subsubsection{Performance metrics of the optimized implementation}
+
+ Note that the cache performance of this implementation is much better thant the previous naive implementation. (see table \ref{tab:optimized-cache-misses})
+ 
+\begin{table}
+\centering
+\begin{tabular}{|l|l|l|l|} 
+\hline
+\begin{tabular}[c]{@{}l@{}}\\\\Implementation\end{tabular} & \begin{tabular}[c]{@{}l@{}}Board \\Width\end{tabular} & \begin{tabular}[c]{@{}l@{}}Board \\Height\end{tabular} & \begin{tabular}[c]{@{}l@{}}Cache\\Misses\end{tabular} \\ 
+\hline
+1 & 10 & 10 & 72.621 \\ 
+\hline
+2 & 16 & 16 & 63.744 \\ 
+\hline
+3 & 32 & 32 & 85.060 \\ 
+\hline
+4 & 64 & 64 & 85.368 \\ 
+\hline
+5 & 128 & 128 & 104.209 \\ 
+\hline
+6 & 256 & 256 & 164.814 \\
+\hline
+\end{tabular}
+\caption{Cache Misses - Optimized}
+\label{tab:optimized-cache-misses}
+\end{table}
 
 \begin{table}
 \centering
@@ -482,6 +569,14 @@ Naive - OpenMP & 512 & 512 & 100000 &  &  \\
 \end{tabular}
 \label{tab:optimized-performance}
 \end{table}
+
+
+\subsubsection{Difficulty with parallelizing the optimized Algorithm}
+
+
+
+
+\section{Summary and conclusions}
 
 \section{Appendix}
 
