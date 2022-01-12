@@ -26,6 +26,7 @@ OPT_LD = $(BASE_LD) -O3
 
 # The dependencies of the manually optimized or not GameOfLife
 MO_GoL_DEPS = common/Timing optimized/GameOfLife optimized/Main
+CL_GoL_DEPS = common/Timing opencl/GameOfLife
 MU_GoL_DEPS = common/Timing unoptimized/GameOfLife unoptimized/Main
 
 # TODO DOC
@@ -45,13 +46,20 @@ MU_CU_OBJ = $(patsubst %, src/%.unopt.o, $(MU_GoL_DEPS))
 GameOfLife.mu.cu.out: $(MU_CU_OBJ)
 	$(UNOPT_LD) -o GameOfLife.mu.cu.out $(MU_CU_OBJ)
 
+CL_OBJ = $(patsubst %, src/%.opt.o, $(CL_GoL_DEPS))
+GameOfLife.cl.out: $(CL_OBJ)
+	$(OPT_LD) -o GameOfLife.cl.out $(CL_OBJ)
+
 # All executables we generate in the end
-ALL_EXECUTABLES = GameOfLife.mo.co.out GameOfLife.mu.co.out GameOfLife.mo.cu.out GameOfLife.mu.cu.out
+ALL_EXECUTABLES = GameOfLife.mo.co.out GameOfLife.mu.co.out GameOfLife.mo.cu.out GameOfLife.mu.cu.out GameOfLife.cl.out
 
 all: $(ALL_EXECUTABLES)
 
+echo_smt:
+	@echo $(CL_OBJ)
+
 # arguments for the executables
-CMD_ARGS = 10 10 60000 0
+CMD_ARGS = 128 128 100000 0
 
 # Execute all executables to compare them
 .PHONY: bench
@@ -64,6 +72,8 @@ bench: all
 	./GameOfLife.mo.cu.out $(CMD_ARGS)
 	@echo -e "\nManuell unoptimiert, compiler unoptimiert"
 	./GameOfLife.mu.cu.out $(CMD_ARGS)
+	@echo -e "\nWith OpenCL"
+	./GameOfLife.cl.out $(CMD_ARGS)
 
 .PHONY: clean
 clean:
