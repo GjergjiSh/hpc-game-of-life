@@ -4,11 +4,6 @@
 #include <iostream>
 #include <ctime>
 
-// @9SMTM6 To avoid confusion:
-// there are two ways of thinking about indexing a 1d array as a 2d array. (Explained in docs)
-// cell_is_alive and select_cell_at respectively use one of each method to illustrate
-// I prefer row, col where row is the number of the row and col is the number of the column
-
 int cell_is_alive(board_t& board, u_int col_idx, u_int row_idx)
 {
     //std::cout << "Selecting cell at " << col_idx << "|" << row_idx << std::endl;
@@ -29,9 +24,6 @@ u_char select_cell_at(board_t& board, const u_int row, const u_int col)
     return *cell_ptr;
 }
 
-
-// @9SMTM6 #TODO Read somewhere that using conditionals is faster than using the modulo in the unopt version
-// Have yet to isolate the difference and test it out myself
 void get_wrap_indexes(board_t& board, const u_int& cell_x, const u_int& cell_y, int& x_left, int& x_right, int& y_above, int& y_below)
 {
 
@@ -131,36 +123,31 @@ void generate_initial_state(board_t& board, const float live_cell_percentage)
     }
 }
 
-//@GjergjiSh #TODO clear up indexing here to make the code a bit more readable
 void generate_next_board_state(board_t& board, board_t& temp_board)
 {
     memcpy(temp_board.cells, board.cells, board.length);
-    // #pragma omp parallel for
-    for (u_int index = 0; index < board.rows * board.cols; index ++) {
+
+    for (u_int index = 0; index < board.rows * board.cols; index++) {
         auto lookup_cell_ptr = temp_board.cells + index;
-        if (*lookup_cell_ptr == 0) continue;
+        if (*lookup_cell_ptr == 0)
+            continue;
         auto nb_count = (*lookup_cell_ptr) >> 1;
         bool is_alive = (*lookup_cell_ptr) & 0b01;
-        
+
         if (is_alive) {
             // if the cell stays alive, skip
-            if (2 <= nb_count && nb_count <= 3) continue;
+            if (2 <= nb_count && nb_count <= 3)
+                continue;
             u_int col = index % board.rows;
             u_int row = index / board.rows;
             // // kill the cell
-            // auto write_cell_ptr = board.cells + index;
-            // *write_cell_ptr &= ~0b01;
-            // #pragma omp critical {
-
-            // }
-            #pragma omp critical
             kill_cell(board, col, row);
         } else {
             // cell only gains life when it has precisely 3 neibors
-            if (nb_count != 3) continue;
+            if (nb_count != 3)
+                continue;
             u_int col = index % board.rows;
             u_int row = index / board.rows;
-            #pragma omp critical
             spawn_cell(board, col, row);
         }
     }

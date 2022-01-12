@@ -59,22 +59,28 @@ echo_smt:
 	@echo $(CL_OBJ)
 
 # arguments for the executables
-CMD_ARGS = 128 128 100000 0
+CMD_ARGS = 64 64 100000 0 1
+CMD_ARGS_OMP = 64 64 100000 0 0
 
 # Execute all executables to compare them
 .PHONY: bench
 bench: all
-	@echo -e "\nManuell optimiert, compiler optimiert"
-	./GameOfLife.mo.co.out $(CMD_ARGS)
-	@echo -e "\nManuell unoptimiert, compiler optimiert"
+	@echo -e "\nManuell unoptimiert, compiler optimiert, seriell"
 	./GameOfLife.mu.co.out $(CMD_ARGS)
+	@echo -e "\nManuell unoptimiert, compiler optimiert, parallel"
+	./GameOfLife.mu.co.out $(CMD_ARGS_OMP)
+	#@echo -e "\nManuell unoptimiert, compiler unoptimiert, seriell"
+	#./GameOfLife.mu.cu.out $(CMD_ARGS)
+	#@echo -e "\nManuell unoptimiert, compiler unoptimiert, parallel"
+	#./GameOfLife.mu.cu.out $(CMD_ARGS_OMP)
 	@echo -e "\nManuell optimiert, compiler unoptimiert"
 	./GameOfLife.mo.cu.out $(CMD_ARGS)
-	@echo -e "\nManuell unoptimiert, compiler unoptimiert"
-	./GameOfLife.mu.cu.out $(CMD_ARGS)
+	@echo -e "\nManuell optimiert, compiler optimiert"
+	./GameOfLife.mo.co.out $(CMD_ARGS)
 	@echo -e "\nWith OpenCL"
 	./GameOfLife.cl.out $(CMD_ARGS)
 
 .PHONY: clean
 clean:
 	rm -f -v $(OPT_OBJ) $(UNOPT_OBJ) $(ALL_EXECUTABLES)
+

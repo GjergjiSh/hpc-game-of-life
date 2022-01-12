@@ -41,5 +41,9 @@ void generate_next_board_state(board_t& board);
 void display_cell_state(int cell);
 void display_board_state(board_t& board);
 void game_of_life_loop(board_t& board, int generations, int display);
+void game_of_life_loop_omp(board_t& board, board_t& temp, int generations, int display);
+
+void spawn_glider(board_t& board);
+
 
 #endif /* UNOPT_GAME_OF_LIFE_H */
