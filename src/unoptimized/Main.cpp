@@ -7,8 +7,8 @@ int main(int argc, char* argv[])
 {
     //Board at generation n-1
     board_t board;
-    board.row_nr = std::stoi(argv[1]);
-    board.col_nr = std::stoi(argv[2]);
+    board.row_nr = 20;
+    board.col_nr = 10;
 
     board.cell_rows = GLIDER;
     //generate_initial_board_state(previous, std::stoi(argv[1]), std::stoi(argv[2]));
