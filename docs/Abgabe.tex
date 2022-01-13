@@ -555,6 +555,21 @@ This can be found in \autoref{chap:summary}, as that it compares all variants.
 \subsection{Summary}
 \label{chap:summary}
 
+\begin{table}
+    \centering
+    \begin{tabular}{|l|l|l|l|l|l|l|l|}
+    \hline
+    \begin{tabular}[c]{@{}l@{}}Board\\Size\end{tabular} & \begin{tabular}[c]{@{}l@{}}OpenCL V1\\Speed\end{tabular} & \begin{tabular}[c]{@{}l@{}}OpenCL \\V2 Speed\end{tabular} & \begin{tabular}[c]{@{}l@{}}OpenCL \\V1 PCL\end{tabular} & \begin{tabular}[c]{@{}l@{}}OpenCL \\V2 PoCL\end{tabular} & \begin{tabular}[c]{@{}l@{}}Optimized\\Char Cellmap\end{tabular} & \begin{tabular}[c]{@{}l@{}}OpenMP\\Naive\end{tabular} & \begin{tabular}[c]{@{}l@{}}OpenMP\\V2\end{tabular} \\
+    \hline
+    120 & 373 & 264 & 6939 & 6939 & 739 & 116958 & 1895 \\
+    \hline
+    480 & 2997 & 2096 & 39061 & 36447 & 11690 & N/A & 25105 \\
+    \hline
+    \end{tabular}
+    \caption{General Performance Comparison}
+    \label{tab:general-performance-comparison}
+\end{table}
+    
 In total the variants we developed on our GPU were the fastest with quite a distance to the rest.
 
 But GPUs are designed for loads like that, and creating that programm was still quite a difficult feat.
@@ -585,49 +600,31 @@ it has a number of additional optimizations that would be possible, that we sadl
 Our OpenCL implementations worked fairly well, but we didnt get to really delve into the profiling that is possible there, 
 using it we might find some optimizations that quite possibly massively increase performance.
 
-\subsection{Potential issues}
-
-This section is by its nature not guaranteed to be complete.
-
-But one issue that I noticed close to the end, is that nearly all of our benchmarks were made using a board with just one glider.
-
-The OpenCL variants are probably not strongly effected by this,
-but due to its "output sensitive" computation requirement the \verb|char-cell| optimized variant is influenced by this.
-
-% avenues: 
-% * better profiling of CPU with intel advisor, `perf` etc
-% * extension of game of life to recognize loops etc
-
-\begin{table}
-\centering
-\begin{tabular}{|l|l|l|l|l|l|l|l|}
-\hline
-\begin{tabular}[c]{@{}l@{}}Board\\Size\end{tabular} & \begin{tabular}[c]{@{}l@{}}OpenCL V1\\Speed\end{tabular} & \begin{tabular}[c]{@{}l@{}}OpenCL \\V2 Speed\end{tabular} & \begin{tabular}[c]{@{}l@{}}OpenCL \\V1 PCL\end{tabular} & \begin{tabular}[c]{@{}l@{}}OpenCL \\V2 PoCL\end{tabular} & \begin{tabular}[c]{@{}l@{}}Optimized\\Char Cellmap\end{tabular} & \begin{tabular}[c]{@{}l@{}}OpenMP\\Naive\end{tabular} & \begin{tabular}[c]{@{}l@{}}OpenMP\\V2\end{tabular} \\
-\hline
-120 & 373 & 264 & 6939 & 6939 & 739 & 116958 & 1895 \\
-\hline
-480 & 2997 & 2096 & 39061 & 36447 & 11690 & N/A & 25105 \\
-\hline
-\end{tabular}
-\caption{General Performance Comparison}
-\label{tab:general-performance-comparison}
-\end{table}
-
 We did not dive into the intricacies of the tools used to measure the performance of our implementations such as
 Intel's Advisor and the perf tool. Intel's Advisor in particular was a rather feature rich software offering, amongst other things,
 optimization recommendations such as loop vectorization and pragma directives that could help the compiler further
 optimize the code. Most of these features were only compatible with an intel compiler however, so we decided to not focus on them.
-that we had issues using Intel Advisors Memory Access Pattern Analysis feature and could not use it
+We had issues using Intel Advisors Memory Access Pattern Analysis feature and could not use it
 to measure the cache performance of each individual loop/function of our implementations. We decided to use perf tool for this reason
 but limited ourselves to the basic features such as measuring cache misses. Future work could include a deeper cache performance analysis
 as well as a better roofline model performance analysis of \textbf{each implementation} using Intel's Advisor. It would also be worth looking
 into loop vectorization to optimize the performance of our implementations. \breakln
 
-One optimization idea we had, but did not get around to implementing, was the use of a hashing algorithm to store current board states.
+One feature that we considered implementing, but didn't get to, was the recognition of loops, or some other detection of "its the same from now on".
+
+One optimization idea we had considering that feature, was the use of a hashing algorithm to store current board states.
 The idea here was to use the hashed board states to identify when the game of life state was identical to that of a previous generation.
 In these cases, the board state for the next generation could be reconstructed from the hashed value instead of by applying the algorithms discussed
 in this document.
 
+\subsection{Potential issues}
+
+This section is by its nature not guaranteed to be complete.
+
+But one issue that we noticed close to the end, is that nearly all of our benchmarks were made using a board with just one glider.
+
+The OpenCL variants are probably not strongly effected by this,
+but due to its "output sensitive" computation requirement the \verb|char-cell| optimized variant is influenced by this.
 
 \section{Appendix}
 \begin{center}
