@@ -27,7 +27,7 @@
 #define MAX_SELECTIONS 10
 #define MAX_NAME_LENGTH 150
 
-#define BLOCK_SIZE 8
+#define BLOCK_SIZE 6
 #define MEM_BLOCK_SIZE BLOCK_SIZE + 2
 
 void display_board_state(bool * board, uint board_width, uint board_height);
@@ -70,7 +70,7 @@ cl_device_id select_device() {
     //     printf("[%d]: %s\n", i, name);
     // }
     // printf("Choose platform (Default 0): ");
-    uint choice = 0;
+    uint choice = 1;
     // scanf("%d", &choice);
     if(choice < 0 || choice >= n_platforms) {
         printf("Invalid choice, using platform 0");
@@ -197,7 +197,7 @@ struct ClBufferRepr {
         int err = clEnqueueWriteBuffer(queue, mem, CL_TRUE, 0, size, src, 0, NULL, NULL);
         if (err != CL_SUCCESS)
         {
-            fprintf(stderr, "Failed to write to device array\n");
+            fprintf(stderr, "Failed to write to device array %d\n", err);
             exit(-1);
         }
     }
@@ -206,7 +206,7 @@ struct ClBufferRepr {
         int err = clEnqueueReadBuffer(queue, mem, CL_TRUE, 0, size, dst, 0, NULL, NULL);
         if (err != CL_SUCCESS)
         {
-            fprintf(stderr, "Failed to read from device array\n");
+            fprintf(stderr, "Failed to read from device array %d\n", err);
             exit(-1);
         }
     }
@@ -251,7 +251,6 @@ void execute(ClContextEtc& cl_ctx_etc, bool* start_board, uint board_height, uin
     // dont want conditionals in every workitem, cant figure out another way
     // ensure work can get cleanly seperated into the other workitems
     if (board_width % BLOCK_SIZE != 0 || board_height % BLOCK_SIZE != 0) throw std::exception();
-    if (BLOCK_SIZE * BLOCK_SIZE < (4 * BLOCK_SIZE + 4)) throw std::exception();
 
     // Execute the kernel
     // local cache needs border values too, we will just have the border cases of this kernel not write their values to global memory. This means we need more local kernels

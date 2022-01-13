@@ -1,5 +1,5 @@
 // #include <opencl-c-base.h>
-#define BLOCK_SIZE 8
+#define BLOCK_SIZE 6
 #define LOCAL_MEM_BLOCK_SIZE (BLOCK_SIZE + 2)
 
 /// fixes modulo for the purposes of this file (maximally negative the modulo range).

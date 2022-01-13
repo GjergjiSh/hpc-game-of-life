@@ -27,6 +27,7 @@ OPT_LD = $(BASE_LD) -O3
 # The dependencies of the manually optimized or not GameOfLife
 MO_GoL_DEPS = common/Timing optimized/GameOfLife optimized/Main
 CL_GoL_DEPS = common/Timing opencl/GameOfLife
+CL2_GoL_DEPS = common/Timing opencl2/GameOfLife
 OMP_VER_GoL_DEPS = common/Timing openmp-variant/GameOfLife
 MU_GoL_DEPS = common/Timing unoptimized/GameOfLife unoptimized/Main
 
@@ -51,17 +52,21 @@ CL_OBJ = $(patsubst %, src/%.opt.o, $(CL_GoL_DEPS))
 GameOfLife.cl.out: $(CL_OBJ)
 	$(OPT_LD) -o GameOfLife.cl.out $(CL_OBJ)
 
+CL2_OBJ = $(patsubst %, src/%.opt.o, $(CL2_GoL_DEPS))
+GameOfLife.cl2.out: $(CL2_OBJ)
+	$(OPT_LD) -o GameOfLife.cl2.out $(CL2_OBJ)
+
 OMP_VER_OBJ = $(patsubst %, src/%.opt.o, $(OMP_VER_GoL_DEPS))
 GameOfLife.omp_ver.out: $(OMP_VER_OBJ)
 	$(OPT_LD) -o GameOfLife.omp_ver.out $(OMP_VER_OBJ)
 
 # All executables we generate in the end
-ALL_EXECUTABLES = GameOfLife.mo.co.out GameOfLife.mu.co.out GameOfLife.mo.cu.out GameOfLife.mu.cu.out GameOfLife.cl.out GameOfLife.omp_ver.out
+ALL_EXECUTABLES = GameOfLife.mo.co.out GameOfLife.mu.co.out GameOfLife.mo.cu.out GameOfLife.mu.cu.out GameOfLife.cl.out GameOfLife.cl2.out GameOfLife.omp_ver.out GameOfLife.omp_ver2.out
 
 all: $(ALL_EXECUTABLES)
 
 # arguments for the executables
-FIELD_AND_GENS = 64 64 100000
+FIELD_AND_GENS = 120 120 100000
 CMD_ARGS = $(FIELD_AND_GENS) 0 1
 CMD_ARGS_OMP = $(FIELD_AND_GENS) 0 0
 
@@ -70,8 +75,8 @@ CMD_ARGS_OMP = $(FIELD_AND_GENS) 0 0
 bench: all
 	# @echo -e "\nManuell unoptimiert, compiler optimiert, seriell"
 	# ./GameOfLife.mu.co.out $(CMD_ARGS)
-	@echo -e "\nManuell unoptimiert, compiler optimiert, parallel"
-	./GameOfLife.mu.co.out $(CMD_ARGS_OMP) 
+	# @echo -e "\nManuell unoptimiert, compiler optimiert, parallel"
+	# ./GameOfLife.mu.co.out $(CMD_ARGS_OMP) 
 	#@echo -e "\nManuell unoptimiert, compiler unoptimiert, seriell"
 	#./GameOfLife.mu.cu.out $(CMD_ARGS)
 	#@echo -e "\nManuell unoptimiert, compiler unoptimiert, parallel"
@@ -82,6 +87,8 @@ bench: all
 	./GameOfLife.mo.co.out $(CMD_ARGS)
 	@echo -e "\nWith OpenCL"
 	./GameOfLife.cl.out $(CMD_ARGS)
+	@echo -e "\nWith OpenCL(V2)"
+	./GameOfLife.cl2.out $(CMD_ARGS)
 	@echo -e "\nWith OMP VER"
 	./GameOfLife.omp_ver.out $(CMD_ARGS)
 
