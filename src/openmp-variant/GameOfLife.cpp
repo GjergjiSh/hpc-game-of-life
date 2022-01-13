@@ -63,7 +63,7 @@ void game_of_life_split_util_global_mem(
     int y_group,
     int x_group
 ) {
-    bool was_alive = group_board[y_local * x_width + x_local];
+    bool was_alive = group_board[y_local * LOCAL_MEM_BLOCK_SIZE + x_local];
     // DISABLED
     // group_board[y_local * LOCAL_MEM_BLOCK_SIZE + x_local] = was_alive;
 
@@ -111,20 +111,24 @@ int main(int argc, char* argv[]) {
 
     TimedScope optimized_gol_timer("OMP VER GoL timer");
 
+    if (display) {        
+        display_board_state(start_field.get(), board_width, board_height);
+    }
+
     for (uint iteration = 0; iteration < generations; iteration ++) {
         #pragma omp for collapse(2)
         for (uint group_row = 0; group_row < 2; group_row++) {
             for (uint group_col = 0; group_col < 2; group_col++) {
                 bool test_field[LOCAL_MEM_BLOCK_SIZE * LOCAL_MEM_BLOCK_SIZE];
-                for (uint row = 0; row < 10; row++) {
-                    for (uint column = 0; column < 10; column++) {
-                        game_of_life_split_util_local_mem(16, 16, start_field.get(), test_field, row, column, group_row, group_col);
+                for (uint row = 0; row < LOCAL_MEM_BLOCK_SIZE; row++) {
+                    for (uint column = 0; column < LOCAL_MEM_BLOCK_SIZE; column++) {
+                        game_of_life_split_util_local_mem(board_width, board_height, start_field.get(), test_field, row, column, group_row, group_col);
                     }
                 }
 
-                for (uint row = 0; row < 10; row++) {
-                    for (uint column = 0; column < 10; column++) {
-                        game_of_life_split_util_global_mem(16, 16, start_field.get(), test_field, row, column, group_row, group_col);
+                for (uint row = 0; row < LOCAL_MEM_BLOCK_SIZE; row++) {
+                    for (uint column = 0; column < LOCAL_MEM_BLOCK_SIZE; column++) {
+                        game_of_life_split_util_global_mem(board_width, board_height, start_field.get(), test_field, row, column, group_row, group_col);
                     }
                 }
             }
