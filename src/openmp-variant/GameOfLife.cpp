@@ -102,42 +102,42 @@ int main(int argc, char* argv[]) {
     int generations = std::stoi(argv[3]);
     bool display = std::stoi(argv[4]);
 
-    auto start_field = std::make_unique<bool[]>(board_height * board_width);
-    start_field[1 + board_width * 2] = true;
-    start_field[2 + board_width * 3] = true;
-    start_field[3 + board_width * 1] = true;
-    start_field[3 + board_width * 2] = true;
-    start_field[3 + board_width * 3] = true;
+    auto game_field = std::make_unique<bool[]>(board_height * board_width);
+    game_field[1 + board_width * 2] = true;
+    game_field[2 + board_width * 3] = true;
+    game_field[3 + board_width * 1] = true;
+    game_field[3 + board_width * 2] = true;
+    game_field[3 + board_width * 3] = true;
 
     TimedScope optimized_gol_timer("OMP VER GoL timer");
 
     if (display) {        
-        display_board_state(start_field.get(), board_width, board_height);
+        display_board_state(game_field.get(), board_width, board_height);
     }
 
     for (uint iteration = 0; iteration < generations; iteration ++) {
         #pragma omp for collapse(2)
         for (uint group_row = 0; group_row < 2; group_row++) {
             for (uint group_col = 0; group_col < 2; group_col++) {
-                bool test_field[LOCAL_MEM_BLOCK_SIZE * LOCAL_MEM_BLOCK_SIZE];
+                bool local_field[LOCAL_MEM_BLOCK_SIZE * LOCAL_MEM_BLOCK_SIZE];
                 for (uint row = 0; row < LOCAL_MEM_BLOCK_SIZE; row++) {
                     for (uint column = 0; column < LOCAL_MEM_BLOCK_SIZE; column++) {
-                        game_of_life_split_util_local_mem(board_width, board_height, start_field.get(), test_field, row, column, group_row, group_col);
+                        game_of_life_split_util_local_mem(board_width, board_height, game_field.get(), local_field, row, column, group_row, group_col);
                     }
                 }
 
                 for (uint row = 0; row < LOCAL_MEM_BLOCK_SIZE; row++) {
                     for (uint column = 0; column < LOCAL_MEM_BLOCK_SIZE; column++) {
-                        game_of_life_split_util_global_mem(board_width, board_height, start_field.get(), test_field, row, column, group_row, group_col);
+                        game_of_life_split_util_global_mem(board_width, board_height, game_field.get(), local_field, row, column, group_row, group_col);
                     }
                 }
             }
         }
 
-        if (display) {        
-            display_board_state(start_field.get(), board_width, board_height);
+        if (display) {
+            printf(" --- gen %d ------------", iteration);
+            display_board_state(game_field.get(), board_width, board_height);
         }
-        
     }
 }
 

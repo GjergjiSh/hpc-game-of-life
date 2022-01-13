@@ -280,6 +280,7 @@ void execute(ClContextEtc& cl_ctx_etc, bool* start_board, uint board_height, uin
             d_board.get_vals(cl_ctx_etc.queue, h_board.get());
             // Wait for the commands to get serviced before reading back results
             clFinish(cl_ctx_etc.queue);
+            printf(" --- gen %d ------------", iteration);
             display_board_state(h_board.get(), board_width, board_height);
         }
         
