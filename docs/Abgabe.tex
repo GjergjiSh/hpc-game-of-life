@@ -280,7 +280,7 @@ The main benefit of the naive implementation of Game of Life is that computing t
 
 \begin{lstlisting}[caption={Parallel Naive State Generation Algorithm},label={lst:gol-parallel-naive-generation-algorithm},language=C++]
 void game_of_life_loop_omp(board_t& board, board_t& temp, int generations, int display) {
-#pragma omp parallel num_threads(12)
+#pragma omp parallel num_threads(8)
     {
         num_threads = omp_get_num_threads();
         for (int gen = 0; gen < generations; gen++) {
@@ -617,7 +617,7 @@ The idea here was to use the hashed board states to identify when the game of li
 In these cases, the board state for the next generation could be reconstructed from the hashed value instead of by applying the algorithms discussed
 in this document.
 
-\subsection{Potential issues}
+\subsection{Footnotes}
 
 This section is by its nature not guaranteed to be complete.
 
