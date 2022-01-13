@@ -523,8 +523,9 @@ For latter experiments we also installed the Portable Computing Language (PoCL),
 
 We also ported the OpenCL V2 version of our Programm as accurately as possible to OpenMP (porting V1 wasn't possible).
 
-\subsubsection{Results - Scaling with Workgroup-Size}
+\subsubsection{Performance Results}
 
+A performance comparison of the OpenCL implementation with the other implementations can be found in \autoref{chap:summary}. \\
 First of all we experimented with the \verb|BLOCK_SIZE|.
 This number determines how many workitems are in a workgroup - there are $(\verb|BLOCK_SIZE| + 2)^2$ workitems in a workgroup.
 
@@ -563,10 +564,6 @@ We were slightly surprised that there were no issues with thread contention or s
 Below this we saw relatively fast slow-downs, as this meant that our algorithm had a massive increase in the relative amount of work-items that are only there to load memory.
 
 We also saw, as expected, a speedup from the V1 of the kernel, with a global memory barrier, to V2 without one but 2 buffers. Surprisingly that difference was fairly small, and doesn't seem to scale overly differently with eg- problemsize.
-
-\subsubsection{Results - Comparison to other methods}
-
-This can be found in \autoref{chap:summary}, as that it compares all variants.
 
 \section{Summary, conclusions and potential avenues}
 \subsection{Summary}
