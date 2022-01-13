@@ -482,12 +482,11 @@ The first idea we had was to add another dimension to the work-group, where the 
 But that is hard to organize both by us, and by the GPU, leading to additional load and massive slow-down because of the single instruction pointer.
 Because of that single instruction pointer we can of course also only execute one kernel in one work-group.
 
-{
-    \centering
+\begin{center}
     \captionof{figure}{Memory-access pattern with work-groups}
     \label{fig:cl-mem-access}
     \includegraphics[width=\linewidth]{imgs/opencl_mem_access.drawio.pdf}
-}
+\end{center}
 
 The simple solution we eventually recognized is to have work-items around the border of the area that is worked on by the work-group.
 The sole purpose of these work-items is to load the value of their respective GoL cell into the local memory. 
@@ -495,16 +494,78 @@ But because they do that exactly the same way as the other work-items, they dont
 \autoref{fig:cl-mem-access} is demonstrating this on a simple board. 
 In that example the board is sized $8^2$, the block-size that a work-group works on is $2^2$, but the work-group has the size $(2 + 2\times 1)^2 = 4^2$.
 
-\autoref{lst:opencl-kernel-source} is showing the source-code for this OpenCL implementation
-{
-    \centering
+\autoref{lst:opencl-kernel-source} is showing the source-code for this OpenCL implementation.
+
+We also implemented another version (V2), that uses 2 seperate memory buffers, and gets rid of the global memory barrier in the kernel
+
+\subsubsection{Platform}
+
+These findings were recorded on a Tower PC with a GTX 1070, Linux-Kernel 5.15, Nvidia Driver 495.44, and an R5 3600 (both well cooled), using the Nvidia supported OpenCL 3.0 implementation.
+
+For latter experiments we also installed the Portable Computing Language, which is an OpenCL implementation that compiles via LLVM to run on the CPU.
+
+We also ported the OpenCL V2 version of our Programm as accurately as possible to OpenMP (porting V1 wasn't possible).
+
+\subsubsection{Results - Scaling with Workgroup-Size}
+
+First of all we experimented with the \verb|BLOCK_SIZE|.
+This number determines how many workitems are in a workgroup - there are $(\verb|BLOCK_SIZE| + 2)^2$ workitems in a workgroup.
+
+We noticed that scaling our \verb|BLOCK_SIZE| beyond 12 lead to the error \verb|CL_OUT_OF_RESOURCES|,
+meaning this would allocate too much memory per work-group on the device, so this was a hard upper limit.
+
+We choose these high board-sized because otherwise we'd get too fast times, that were unsafe to compare. 
+We choose these specific values because they all are divided by the \verb|BLOCK_SIZE|s we choose.
+
+\begin{table}[]
+\centering
+\begin{tabular}{l||l|l|l|l|l|l|l}
+    \verb|BLOCK_SIZE|    & 12   & 10   & 8    & 6    & 5    & 4    & 2    \\ \hline \hline
+    execution time v1 /s & 13.6 & 12.0 & 9.60 & 8.77 & 10.6 & 15.8 & 36.4 \\ \hline
+    execution time v2 /s & 9.34 & 9.60 & 8.10 & 7.86 & 9.86 & 15.4 & 37.5 \\
+\end{tabular}
+\caption{The execution time of both OpenCL versions as they scale with block-size, at a board-size of $960^2$, and 100k generations}
+\label{tab:blocksize-scaling1}
+\end{table}
+
+\begin{table}[]
+\centering
+\begin{tabular}{l||l|l|l|l}
+    \verb|BLOCK_SIZE|    & 12   & 8    & 6    & 5    \\ \hline \hline
+    execution time v1 /s & 10.5 & 9.42 & 8.01 & 9.74 \\ \hline
+    execution time v2 /s & 7.30 & 6.65 & 6.26 & 7.83 \\
+\end{tabular}
+\caption{The execution time of both OpenCL versions as they scale with block-size, at a board-size of $240^2$, and 1000k generations}
+\label{tab:blocksize-scaling2}
+\end{table}
+
+As one can see in these charts, the ideal \verb|BLOCK_SIZE| was at 6, meaning there were 36 work-items per work-group. 
+We suspect that this is because of our GPU can execute 32 threads ("warps" in Nvidia Terminology).
+Beyond that we saw a slight decrease in speed, until the device was unable to run because of the error mentioned above.
+We were slightly surprised that there were no issues with thread contention or similar, but these threads were probably just distributed on seperate "Multiprocessor"s, with the performance decrease coming from the shared memory. 
+Below this we saw relatively fast slow-downs, as this meant that our algorithm had a massive increase in the relative amount of work-items that are only there to load memory.
+
+We also saw, as expected, a speedup from the V1 of the kernel, with a global memory barrier, to V2 without one but 2 buffers. Surprisingly that difference was fairly small, and doesn't seem to scale overly differently with eg- problemsize.
+
+\subsubsection{Results - Comparison to other methods}
+
+
+% \begin{table}
+%     \begin{tabular*}{|l|l|l|l|l|l|l|l}
+%         BLOCK\_SIZE          & 12   & 10   & 8    & 6    & 5    & 4    & 2    \\
+%         \hline \hline
+%         execution time v1 /s & 13.6 & 12.0 & 9.60 & 8.77 & 10.6 & 15.8 & 36.4 \\
+%         execution time v2 /s & 9.34 & 9.60 & 8.10 & 7.86 & 9.86 & 15.4 & 37.5
+%     \end{tabular*}
+% \end{table}
+
+\section{Summary, conclusions and potential avenues}
+
+\section{Appendix}
+\begin{center}
     \captionof{figure}{Sourcecode of the kernel for our OpenCL implementation}
     \label{lst:opencl-kernel-source}
     \lstinputlisting[language=C++]{../src/opencl/gol_work_group.cl}
-}
-
-\section{Summary and conclusions}
-
-\section{Appendix}
+\end{center}
 
 \end{document}
