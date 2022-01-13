@@ -471,7 +471,7 @@ vendor-specific architectures, that usually behave similar).
 \subsubsection{Memory locality and branching}
 
 Since every cell, upon its calculation, needs to look up its neibours and its own value, in one generation the value of 
-a cell needs to be looked up 9 times, 8 times by the neobors, once by itself. So we want to cache this.
+a cell needs to be looked up 9 times, 8 times by the neighbours, once by itself. So we want to cache this.
 We also want to keep down the number of lookups in global memory per work-item, as that is assumed to be a magnitude slower 
 than local memory - so the memory shared among a work-group.
 
