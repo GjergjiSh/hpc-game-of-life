@@ -4,4 +4,6 @@ Abgabe.pdf
 *.out
 *.fdb_*
 *.fls
+*.toc
+*.synctex.gz
 out

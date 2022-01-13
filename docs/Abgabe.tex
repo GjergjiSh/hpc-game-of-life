@@ -1,4 +1,5 @@
-% !TeX program = XeLaTeX or LuaLaTeX
+% !TeX program = LaTex
+% XeLaTeX or LuaLaTeX
 % !TeX encoding = UTF-8 Unicode
 % TEMPLATE.TEX
 %
@@ -93,7 +94,7 @@
 \usepackage{xcolor}             % Obviously colors. Usage: \color{red} Red text
 \usepackage{booktabs}           % Nice rules for tables. Usage \begin{tabular}\toprule ... \midrule ... \bottomrule
 
-\usepackage{fontspec}
+% \usepackage{fontspec}
 % Source code listings
 \usepackage{listings}           % Source Code Listings. Usage: \begin{lstlisting}...\end{lstlisting}
 %\usepackage{lstfiracode}
@@ -479,34 +480,64 @@ TODO!!!
 
 \subsection{OpenCL Implementation}
 
-To use OpenCL at all we had to do qite a bit of work, since we had a Makefile based build process, so we had build the Application using mostly \verb|wsl|, but passing a GPU to \verb|wsl| is no small feat. So we installed a native Linux OS.
+To use OpenCL at all we had to do qite a bit of work, since we had a Makefile based build process,
+so we had build the Application using mostly \verb|wsl|, but passing a GPU to \verb|wsl| is no small feat. 
+So we installed a native Linux OS.
 
-We were also triggered to rethink the implementation fundamentally for OpenCL, since it has more explicit memory tiers than executions on the CPU with implicit caching.
+We were also triggered to rethink the implementation fundamentally for OpenCL, 
+since it has more explicit memory tiers than executions on the CPU with implicit caching.
 
-OpenCL prefers to group parts of the algorithm in 2 levels, one individual problem - \verb|Work-Item|s - and a group of them together - \verb|Work-Group|. Items in a group can coordinate with shared memory, and access to that memory is usually a magnitude faster than access to global memory, that is shared by all Groups (so shared among the entire algorithm).
+OpenCL prefers to group parts of the algorithm in 2 levels, one individual problem - \verb|Work-Item|s - 
+and a group of them together - \verb|Work-Group|. Items in a group can coordinate with shared memory, 
+and access to that memory is usually a magnitude faster than access to global memory, 
+that is shared by all Groups (so shared among the entire algorithm).
 
-We want to utilize this of course. But another problem is the execution and branching. All work-items in a work-group must be assumed to be executed together with one instruction pointer.
+We want to utilize this of course. But another problem is the execution and branching. 
+All work-items in a work-group must be assumed to be executed together with one instruction pointer.
 
-This means that for starters the slowest work-item will determine the combined execution speed. But the coupling is stronger than that. If the code includes branching, AND both branches get executed, these branches must be executed AFTER one another, because of the single instuction pointer per work-group (in reality these assumtions are not always true, but work-items and groups are meant to be abstractions on vendor-specific architectures, that usually behave similar).
+This means that for starters the slowest work-item will determine the combined execution speed. 
+But the coupling is stronger than that. If the code includes branching, AND both branches get executed,
+these branches must be executed AFTER one another, because of the single instuction pointer per work-group 
+(in reality these assumtions are not always true, but work-items and groups are meant to be abstractions on 
+vendor-specific architectures, that usually behave similar).
 
 \subsubsection{Memory locality and branching}
 
+Since every cell, upon its calculation, needs to look up its neibours and its own value, in one generation the value of 
+a cell needs to be looked up 9 times, 8 times by the neobors, once by itself. So we want to cache this.
+We also want to keep down the number of lookups in global memory per work-item, as that is assumed to be a magnitude slower 
+than local memory - so the memory shared among a work-group.
 
+Because of the shared instruction pointer we especially want to reduce the number of memory lookups. 
+The best case would be one memory lookup per group.
+To do that in a work-group that is smaller than the board, we need more work-items than Game of Life (GoL) Cells written to in that group.
+The first idea we had was to add another dimension to the work-group, where the 3rd dimension is meant to do the additional loading. 
+But that is hard to organize both by us, and by the GPU, leading to additional load and massive slow-down because of the single instruction pointer.
+Because of that single instruction pointer we can of course also only execute one kernel in one work-group.
 
-\begin{center}
+{
+    \centering
     \captionof{figure}{Memory-access pattern with work-groups}
     \label{fig:cl-mem-access}
-    \includegraphics[width=\linewidth]{imgs/opencl_mem_access.pdf}
-\end{center}
+    \includegraphics[width=\linewidth]{imgs/opencl_mem_access.drawio.pdf}
+}
+
+The simple solution we eventually recognized is to have work-items around the border of the area that is worked on by the work-group.
+The sole purpose of these work-items is to load the value of their respective GoL cell into the local memory. 
+But because they do that exactly the same way as the other work-items, they dont slow down them, and total execution of the work-group is faster.
+\autoref{fig:cl-mem-access} is demonstrating this on a simple board. 
+In that example the board is sized $8^2$, the block-size that a work-group works on is $2^2$, but the work-group has the size $(2 + 2\times 1)^2 = 4^2$.
+
+\autoref{lst:opencl-kernel-source} is showing the source-code for this OpenCL implementation
+{
+    \centering
+    \captionof{figure}{Sourcecode of the kernel for our OpenCL implementation}
+    \label{lst:opencl-kernel-source}
+    \lstinputlisting[language=C++]{../src/opencl/gol_work_group.cl}
+}
 
 \section{Summary and conclusions}
 
 \section{Appendix}
-
-\begin{center}
-    \captionof{figure}{Beispiel-Sourcecode}
-    \label{fig:GameOfLife.cpp}
-    \lstinputlisting[language=C++]{../src/common/Timing.cpp}
-\end{center}
 
 \end{document}

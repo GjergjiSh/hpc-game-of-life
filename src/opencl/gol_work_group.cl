@@ -2,7 +2,7 @@
 #define BLOCK_SIZE 8
 #define LOCAL_MEM_BLOCK_SIZE (BLOCK_SIZE + 2)
 
-/// fixes modulo for the purposes of this file (maximally negative the modulo range). Also may whoever decided Cs modulo behavior was right like it is suffer...
+/// fixes modulo for the purposes of this file (maximally negative the modulo range).
 int fixed_modulo(int val, int mod) {
     return (val + mod) % mod;
 }
@@ -11,7 +11,7 @@ kernel void game_of_life_split(
     int x_width,
     int y_width,
     global bool* board,
-    local bool* group_board // has size (BLOCK_SIZE + 2)²
+    local bool* group_board // has size LOCAL_MEM_BLOCK_SIZE²
 )
 {
     int y_local = get_local_id(0);
@@ -45,14 +45,6 @@ kernel void game_of_life_split(
     bool would_gain_live = nb_count == 3;
 
     bool is_alive_now = was_alive ? would_stay_alive : would_gain_live;
-
-    // printf("(%2d, %2d) : (%d, %d)", x, y, x_local, y_local);
-
-    // if (is_compute_cell) {
-    //     printf("\t nb: %d, %d -> %d", nb_count, was_alive, is_alive_now);
-    // }
-
-    // printf("\n");
 
     // if this is a cell at the border its only real purpose was to write the local memory. I left the other stuff there because it will still realistically be executed like this
     barrier(CLK_GLOBAL_MEM_FENCE);
