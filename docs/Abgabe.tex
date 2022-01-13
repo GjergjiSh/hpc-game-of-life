@@ -170,22 +170,24 @@
 
 \section{Motivation}
 
-In diesem Projekt wollen wir unser bisheriges Wissen anwenden. 
-Dafür gab es ein paar Vorschläge von Seiten Herr Prof. Speisers, wir haben uns letztlich für den ersten Vorschlag, mit unseren eigenen Anpassungen, entschieden.
-Das Problem ist konzeptionell nicht aufwendig, was uns den Fokus auf die eigentlichen Themen der Vorlesung erlaubt, und einfach erwaiterbar, wie wir im kommenden Zeigen werden.
+The purpose of this project is to solidify the knowledge gained in this course.
 
-Denn das Game of Life einfach durchzurechnen mag zwar einfach optimierbar sein, aber da wir die Spielschritte jwewils aufgeben wollen, limitiert uns das.
+As such we decided to choose a simple suggestion as basis for our Project, this allows us to dive deeper into the topic without distractions, and this particular issue can be extended if neccessary.
 
-Wir könnten natürlich nur jedes n-te Spielfeld ausgeben, oder das Spiel auf massiver Größe anschauen, da verliert man aber schnell die Übersicht, und es ist letztlich nichts wirklich nachvollziehbar.
+That is also the reason we decided to minimize the UI. We also decided to default to headless running by default, as the input and output of the result would probably be the major limiting factor in most optimizations.
 
-Daher haben wir uns für eine etwas andere Problemstellung geeinigt, und zwar auf die Feststellung dessen, wann das Spiel sich wiederholt.
-Zur Erkennung des Wiederholens setzen wir auf simple strukturelle Gleichheit des Spielfeldes, andere Ansätze gehen thematisch über den Sinn dieser Projektarbeit und würden Zeit vom eigentlichen Thema abzwecken.
+A major extension we waned to look at, if we get to it, was to use our headless running game to detect cycles in the loop.
+
+\section{Problem statement}
+
+Our Issue started out as a naive \verb|C++| Implementation.
+
+
+\footnote{TODO}
+
+% TODO
 
 \pagebreak
-
-\section{Problemstellung}
-
-Wir beginnen mit einer einfachen Implementierung in C++, die 
 
 \section{Game Of Life Implementation}
 
@@ -446,7 +448,7 @@ void generate_next_board_state(board_t& board, board_t& temp_board) {
 \end{lstlisting}
 
 Note that the cache performance of this implementation, tested on a board containing a single glider, is much better than the previous naive implementation. (see table \ref{tab:optimized-cache-misses}). Despite the fact that the implementation is not parallelized, the optimized state generation algorithm performs much better than the naive implementation, particularly on smaller board sizes. 
- 
+
 \begin{table}
 \centering
 \begin{tabular}{|l|l|l|l|} 
@@ -474,6 +476,18 @@ Note that the cache performance of this implementation, tested on a board contai
 \subsubsection{Difficulty with parallelizing the optimized Algorithm}
 
 TODO!!!
+
+\subsection{OpenCL Implementation}
+INTRO \footnote{TODO}
+
+\subsubsection{Memory locality and branching}
+
+
+\begin{center}
+    \captionof{figure}{Memory-access pattern with execution blocks \footnote{TODO}}
+    \label{fig:cl-mem-access.cpp}
+    \includegraphics[]{imgs/cell-algo.png}
+\end{center}
 
 \section{Summary and conclusions}
 
