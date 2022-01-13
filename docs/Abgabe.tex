@@ -514,7 +514,7 @@ This number determines how many workitems are in a workgroup - there are $(\verb
 We noticed that scaling our \verb|BLOCK_SIZE| beyond 12 lead to the error \verb|CL_OUT_OF_RESOURCES|,
 meaning this would allocate too much memory per work-group on the device, so this was a hard upper limit.
 
-We choose these high board-sized because otherwise we'd get too fast times, that were unsafe to compare. 
+We choose these high board-sized because otherwise we'd get too fast times, that were unsafe to compare.
 We choose these specific values because they all are divided by the \verb|BLOCK_SIZE|s we choose.
 
 \begin{table}[]
@@ -539,10 +539,10 @@ We choose these specific values because they all are divided by the \verb|BLOCK_
 \label{tab:blocksize-scaling2}
 \end{table}
 
-As one can see in these charts, the ideal \verb|BLOCK_SIZE| was at 6, meaning there were 36 work-items per work-group. 
+As one can see in these charts, the ideal \verb|BLOCK_SIZE| was at 6, meaning there were 36 work-items per work-group.
 We suspect that this is because of our GPU can execute 32 threads ("warps" in Nvidia Terminology).
 Beyond that we saw a slight decrease in speed, until the device was unable to run because of the error mentioned above.
-We were slightly surprised that there were no issues with thread contention or similar, but these threads were probably just distributed on seperate "Multiprocessor"s, with the performance decrease coming from the shared memory. 
+We were slightly surprised that there were no issues with thread contention or similar, but these threads were probably just distributed on seperate "Multiprocessor"s, with the performance decrease coming from the shared memory.
 Below this we saw relatively fast slow-downs, as this meant that our algorithm had a massive increase in the relative amount of work-items that are only there to load memory.
 
 We also saw, as expected, a speedup from the V1 of the kernel, with a global memory barrier, to V2 without one but 2 buffers. Surprisingly that difference was fairly small, and doesn't seem to scale overly differently with eg- problemsize.
@@ -563,11 +563,11 @@ We also saw, as expected, a speedup from the V1 of the kernel, with a global mem
 
 \begin{table}
 \centering
-\begin{tabular}{|l|l|l|l|l|l|l|l|} 
+\begin{tabular}{|l|l|l|l|l|l|l|l|}
 \hline
-\begin{tabular}[c]{@{}l@{}}Board\\Size\end{tabular} & \begin{tabular}[c]{@{}l@{}}OpenCL V1\\Speed\end{tabular} & \begin{tabular}[c]{@{}l@{}}OpenCL \\V2 Speed\end{tabular} & \begin{tabular}[c]{@{}l@{}}OpenCL \\V1 PCL\end{tabular} & \begin{tabular}[c]{@{}l@{}}OpenCL \\V2 PoCL\end{tabular} & \begin{tabular}[c]{@{}l@{}}Optimized\\Char Cellmap\end{tabular} & \begin{tabular}[c]{@{}l@{}}OpenMP\\Naive\end{tabular} & \begin{tabular}[c]{@{}l@{}}OpenMP\\V2\end{tabular} \\ 
+\begin{tabular}[c]{@{}l@{}}Board\\Size\end{tabular} & \begin{tabular}[c]{@{}l@{}}OpenCL V1\\Speed\end{tabular} & \begin{tabular}[c]{@{}l@{}}OpenCL \\V2 Speed\end{tabular} & \begin{tabular}[c]{@{}l@{}}OpenCL \\V1 PCL\end{tabular} & \begin{tabular}[c]{@{}l@{}}OpenCL \\V2 PoCL\end{tabular} & \begin{tabular}[c]{@{}l@{}}Optimized\\Char Cellmap\end{tabular} & \begin{tabular}[c]{@{}l@{}}OpenMP\\Naive\end{tabular} & \begin{tabular}[c]{@{}l@{}}OpenMP\\V2\end{tabular} \\
 \hline
-120 & 373 & 264 & 6939 & 6939 & 739 & 116958 & 1895 \\ 
+120 & 373 & 264 & 6939 & 6939 & 739 & 116958 & 1895 \\
 \hline
 480 & 2997 & 2096 & 39061 & 36447 & 11690 & N/A & 25105 \\
 \hline
@@ -576,6 +576,20 @@ We also saw, as expected, a speedup from the V1 of the kernel, with a global mem
 \label{tab:general-performance-comparison}
 \end{table}
 
+We did not dive into the intricacies of the tools used to measure the performance of our implementations such as
+Intel's Advisor and the perf tool. Intel's Advisor in particular was a rather feature rich software offering, amongst other things,
+optimization recommendations such as loop vectorization and pragma directives that could help the compiler further
+optimize the code. Most of these features were only compatible with an intel compiler however, so we decided to not focus on them.
+that we had issues using Intel Advisors Memory Access Pattern Analysis feature and could not use it
+to measure the cache performance of each individual loop/function of our implementations. We decided to use perf tool for this reason
+but limited ourselves to the basic features such as measuring cache misses. Future work could include a deeper cache performance analysis
+as well as a better roofline model performance analysis of \textbf{each implementation} using Intel's Advisor. It would also be worth looking
+into loop vectorization to optimize the performance of our implementations. \breakln
+
+One optimization idea we had, but did not get around to implementing, was the use of a hashing algorithm to store current board states.
+The idea here was to use the hashed board states to identify when the game of life state was identical to that of a previous generation.
+In these cases, the board state for the next generation could be reconstructed from the hashed value instead of by applying the algorithms discussed
+in this document.
 
 
 \section{Appendix}
