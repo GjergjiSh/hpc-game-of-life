@@ -200,7 +200,12 @@ typedef struct
 } board_t;.
 \end{lstlisting}
 
-To test the performance of the implementation in a reproducable way, the initial state of the board is initialized with a glider pattern on the top left corner of the board. During the execution, a configurable amount of world states is generated. Each state can be displayed using a simplistic console based GUI. The displaying of the states is however deactivated and not taken into account when measuring the performance of the implementation as it would be the major performance limiting factor. \newline
+To test the performance of the implementation in a reproducable way, 
+the initial state of the board is initialized with a glider pattern on the top left corner of the board. 
+During the execution, a configurable amount of world states is generated. 
+Each state can be displayed using a simplistic console based GUI. 
+The displaying of the states is however deactivated and not taken into account when measuring the performance of the implementation 
+as with an optimized implementation this would likely be the mayor limiting factor\\
 
 A naive way of solving the state generation problem is to loop through each cell of the board and calculate the living neighbour count of the cell. (see listing \ref{lst:gol-naive-neighbour-counting}). Then, calculate the next cell state for each cell by taking into account the previously calculated living neighbour count and applying the rules of the game accordingly. 
 
@@ -251,6 +256,8 @@ void generate_next_board_state(board_t& current_board_state) {
 }
 \end{lstlisting}
 
+%  TODO tables
+
 \subsubsection{OpenMP Parallelization}
 
 \begin{table}
@@ -276,7 +283,17 @@ void generate_next_board_state(board_t& current_board_state) {
 \label{tab:naive-performance-metrics}
 \end{table}
 
-The main benefit of the naive implementation of Game of Life is that computing the value of a cell in the current generation does not depend on the computations of the neighbouring cells. For this reason, the implementation lends itself to parallelization. Each thread is only responsible for reading the data of a particular board area. All parallel threads read the current board state from the copy of the board mentioned above but none of them write in the same block of the array. This means that there is no need for synchronization between the threads and therefore no performance hits are incurred due to synchronization related overhead. Thus, OpenMP can be used to easily parallelize the naive state generation algorithm as seen in listing \ref{lst:gol-parallel-naive-generation-algorithm}. The only critical part is the updating of current the board state which can be done by a single thread to avoid the need for synchronization. Table \ref{tab:naive-performance-metrics} provides an overview of the performance difference between the serial and parallel implementations (8 threads) of the naive algorithm with different board sizes, on an 8 core Intel(R) Core(TM) i7-10510U CPU @ 1.80GHz processor.
+The main benefit of the naive implementation of Game of Life is that computing the value of a cell in the current generation 
+does not depend on the computations of the neighbouring cells. For this reason, the implementation lends itself to parallelization. 
+Each thread is only responsible for reading the data of a particular board area.
+All parallel threads read the current board state from the copy of the board mentioned above but none of them write in the same block of the array. 
+This means that there is no need for synchronization between the threads and therefore no performance hits are incurred due to 
+synchronization related overhead. 
+Thus, OpenMP can be used to easily parallelize the naive state generation algorithm as seen in 
+listing \ref{lst:gol-parallel-naive-generation-algorithm}. 
+The only critical part is the updating of current the board state which can be done by a single thread to avoid the need for synchronization. 
+Table \ref{tab:naive-performance-metrics} provides an overview of the performance difference between the serial and 
+parallel implementations (8 threads) of the naive algorithm with different board sizes, on an 8 core Intel(R) Core(TM) i7-10510U CPU @ 1.80GHz processor.
 
 \begin{lstlisting}[caption={Parallel Naive State Generation Algorithm},label={lst:gol-parallel-naive-generation-algorithm},language=C++]
 void game_of_life_loop_omp(board_t& board, board_t& temp, int generations, int display) {
