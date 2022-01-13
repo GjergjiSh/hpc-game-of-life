@@ -478,15 +478,25 @@ Note that the cache performance of this implementation, tested on a board contai
 TODO!!!
 
 \subsection{OpenCL Implementation}
-INTRO \footnote{TODO}
+
+To use OpenCL at all we had to do qite a bit of work, since we had a Makefile based build process, so we had build the Application using mostly \verb|wsl|, but passing a GPU to \verb|wsl| is no small feat. So we installed a native Linux OS.
+
+We were also triggered to rethink the implementation fundamentally for OpenCL, since it has more explicit memory tiers than executions on the CPU with implicit caching.
+
+OpenCL prefers to group parts of the algorithm in 2 levels, one individual problem - \verb|Work-Item|s - and a group of them together - \verb|Work-Group|. Items in a group can coordinate with shared memory, and access to that memory is usually a magnitude faster than access to global memory, that is shared by all Groups (so shared among the entire algorithm).
+
+We want to utilize this of course. But another problem is the execution and branching. All work-items in a work-group must be assumed to be executed together with one instruction pointer.
+
+This means that for starters the slowest work-item will determine the combined execution speed. But the coupling is stronger than that. If the code includes branching, AND both branches get executed, these branches must be executed AFTER one another, because of the single instuction pointer per work-group (in reality these assumtions are not always true, but work-items and groups are meant to be abstractions on vendor-specific architectures, that usually behave similar).
 
 \subsubsection{Memory locality and branching}
 
 
+
 \begin{center}
-    \captionof{figure}{Memory-access pattern with execution blocks \footnote{TODO}}
-    \label{fig:cl-mem-access.cpp}
-    \includegraphics[]{imgs/cell-algo.png}
+    \captionof{figure}{Memory-access pattern with work-groups}
+    \label{fig:cl-mem-access}
+    \includegraphics[width=\linewidth]{imgs/opencl_mem_access.pdf}
 \end{center}
 
 \section{Summary and conclusions}

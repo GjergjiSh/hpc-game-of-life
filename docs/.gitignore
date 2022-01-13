@@ -1,6 +1,6 @@
 *.aux
 *.log
-*.pdf
+Abgabe.pdf
 *.out
 *.fdb_*
 *.fls
