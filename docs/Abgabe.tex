@@ -291,38 +291,9 @@ This means that there is no need for synchronization between the threads and the
 synchronization related overhead. 
 Thus, OpenMP can be used to easily parallelize the naive state generation algorithm as seen in 
 listing \ref{lst:gol-parallel-naive-generation-algorithm}. 
-The only critical part is the updating of current the board state which can be done by a single thread to avoid the need for synchronization. 
+The only critical part is the updating of the current board state which can be done by a single thread to avoid the need for synchronization. 
 Table \ref{tab:naive-performance-metrics} provides an overview of the performance difference between the serial and 
 parallel implementations (8 threads) of the naive algorithm with different board sizes, on an 8 core Intel(R) Core(TM) i7-10510U CPU @ 1.80GHz processor.
-
-\begin{lstlisting}[caption={Parallel Naive State Generation Algorithm},label={lst:gol-parallel-naive-generation-algorithm},language=C++]
-void game_of_life_loop_omp(board_t& board, board_t& temp, int generations, int display) {
-#pragma omp parallel num_threads(8)
-    {
-        num_threads = omp_get_num_threads();
-        for (int gen = 0; gen < generations; gen++) {
-#pragma omp for
-            for (int row = 0; row < board.row_nr; row++) {
-                for (int col = 0; col < board.col_nr; col++) {
-                    int alive_neighbours = get_neighbour_count(row, col, board);
-                    int cell_survives = board.cell_rows.at(row).at(col) && (alive_neighbours == 2 || alive_neighbours == 3);
-                    int cell_birth = !board.cell_rows.at(row).at(col) && (alive_neighbours == 3);
-                    temp.cell_rows.at(row).at(col) = cell_survives || cell_birth;
-                }
-            }
-#pragma omp master
-            {
-                board.cell_rows.swap(temp.cell_rows);
-
-                if (display) {
-                    display_board_state(board);
-                }
-            }
-#pragma omp barrier
-        }
-    }
-}
-\end{lstlisting}
 
 \subsubsection{Limiting Factors - Cache Performance}
 
@@ -402,7 +373,7 @@ void kill_cell(board_t& board, const u_int& row, const u_int& col) {
 }
 \end{lstlisting}
 
-Listing \ref{lst:gol-optimized-algo} depitcs the optimized state generation algorithm. As previously discussed, we initially check if the selected cell is a 0 byte and if that is the case, we skip the application of the rules. If the requirement for skipping is not fulfilled, the alive neighbour count of the cell is acquired by using a bitwise shift operation on the unsigned char representing the cell-relevant data. If the data of the unsigned char is shifted by one to the right, the state bit becomes a carry bit. Therefore, the only remaining data in the unsigned char are the 4 bits representing the alive neighbour count of the selected cell. Depending on this number, we apply the rules of the game to the cell and update all neighbouring cells accordingly.
+Listing \ref{lst:gol-optimized-algo} depicts the optimized state generation algorithm. As previously discussed, we initially check if the selected cell is a 0 byte and if that is the case, we skip the application of the rules. If the requirement for skipping is not fulfilled, the alive neighbour count of the cell is acquired by using a bitwise shift operation on the unsigned char representing the cell-relevant data. If the data of the unsigned char is shifted by one to the right, the state bit becomes a carry bit. Therefore, the only remaining data in the unsigned char are the 4 bits representing the alive neighbour count of the selected cell. Depending on this number, we apply the rules of the game to the cell and update all neighbouring cells accordingly.
 
 \pagebreak
 
@@ -469,16 +440,14 @@ so we had build the Application using mostly \verb|wsl|, but passing a GPU to \v
 So we installed a native Linux OS.
 
 We were also triggered to rethink the implementation fundamentally for OpenCL, 
-since it has more explicit memory tiers than executions on the CPU with implicit caching.
+since it has explicit memory tiers compared to the CPU with implicit caching.
 
 OpenCL prefers to group parts of the algorithm in 2 levels, one individual problem - \verb|Work-Item|s - 
 and a group of them together - \verb|Work-Group|. Items in a group can coordinate with shared memory, 
 and access to that memory is usually a magnitude faster than access to global memory, 
-that is shared by all Groups (so shared among the entire algorithm).
-
+that is shared by all Groups (so shared among the entire algorithm).\\
 We want to utilize this of course. But another problem is the execution and branching. 
-All work-items in a work-group must be assumed to be executed together with one instruction pointer.
-
+All work-items in a work-group must be assumed to be executed together with one instruction pointer.\\
 This means that for starters the slowest work-item will determine the combined execution speed. 
 But the coupling is stronger than that. If the code includes branching, AND both branches get executed,
 these branches must be executed AFTER one another, because of the single instuction pointer per work-group 
@@ -490,14 +459,13 @@ vendor-specific architectures, that usually behave similar).
 Since every cell, upon its calculation, needs to look up its neibours and its own value, in one generation the value of 
 a cell needs to be looked up 9 times, 8 times by the neighbours, once by itself. So we want to cache this.
 We also want to keep down the number of lookups in global memory per work-item, as that is assumed to be a magnitude slower 
-than local memory - so the memory shared among a work-group.
-
-Because of the shared instruction pointer we especially want to reduce the number of memory lookups. 
-The best case would be one memory lookup per group.
+than local memory - so the memory shared among a work-group.\\
+Especially because of the shared instruction pointer we want to reduce the number of memory lookups.
+The best case would be one memory lookup per item, on the same code-line.\\
 To do that in a work-group that is smaller than the board, we need more work-items than Game of Life (GoL) Cells written to in that group.
 The first idea we had was to add another dimension to the work-group, where the 3rd dimension is meant to do the additional loading. 
 But that is hard to organize both by us, and by the GPU, leading to additional load and massive slow-down because of the single instruction pointer.
-Because of that single instruction pointer we can of course also only execute one kernel in one work-group.
+We can also only execute a single kernel in one work-group, because of the single instruction pointer.
 
 \begin{center}
     \captionof{figure}{Memory-access pattern with work-groups}
@@ -505,23 +473,23 @@ Because of that single instruction pointer we can of course also only execute on
     \includegraphics[width=\linewidth]{imgs/opencl_mem_access.drawio.pdf}
 \end{center}
 
-The simple solution we eventually recognized is to have work-items around the border of the area that is worked on by the work-group.
+The simple solution we eventually recognized is to have additional work-items around the border of the area that is worked on by the work-group.
 The sole purpose of these work-items is to load the value of their respective GoL cell into the local memory. 
 But because they do that exactly the same way as the other work-items, they dont slow down them, and total execution of the work-group is faster.
 \autoref{fig:cl-mem-access} is demonstrating this on a simple board. 
 In that example the board is sized $8^2$, the block-size that a work-group works on is $2^2$, but the work-group has the size $(2 + 2\times 1)^2 = 4^2$.
 
-\autoref{lst:opencl-kernel-source} is showing the source-code for this OpenCL implementation.
+\autoref{lst:opencl-kernel-source} shows the source-code for this OpenCL implementation.
 
 We also implemented another version (V2), that uses 2 seperate memory buffers, and gets rid of the global memory barrier in the kernel
 
 \subsubsection{Platform}
 
-These findings were recorded on a Tower PC with a GTX 1070, Linux-Kernel 5.15, Nvidia Driver 495.44, and an AMD Ryzen R5 3600 (both well cooled), using the Nvidia supported OpenCL 3.0 implementation.
+These findings were recorded on a Tower PC with the Linux-Kernel 5.15, Nvidia Driver 495.44, a Nvidia GTX 1070 and an AMD Ryzen R5 3600 (both well cooled), using the Nvidia provided OpenCL 3.0 implementation.
 
-For latter experiments we also installed the Portable Computing Language (PoCL), which is an OpenCL implementation that compiles via LLVM to run on the CPU.
+For further experiments we also installed the Portable Computing Language (PoCL), which is an OpenCL implementation that compiles via LLVM to run on the CPU.
 
-We also ported the OpenCL V2 version of our Programm as accurately as possible to OpenMP (porting V1 wasn't possible).
+We also ported the OpenCL implementation V2 of our Programm as accurately as possible to OpenMP (porting V1 wasn't possible).
 
 \subsubsection{Performance Results}
 
@@ -597,7 +565,7 @@ The likely reason is that the OpenCL implementations have better cache locality 
 The reordering of the board into the block gets worked on by all CPU cores, and after that most cores work on their cell.
 
 The execution of our OpenCL implementations on our CPU, using the Portable Computing Language, were interestingly far slower than our OpenMP port.
-We are unsure whether this is due to PoCL being a potentially inefficient implementation, or due to general OpenCL overhead, or something else entirely.
+We are uncertain whether this is due to PoCL being a potentially inefficient implementation, or due to general OpenCL overhead, or something else entirely.
 
 \subsection{Potential avenues}
 
@@ -633,9 +601,7 @@ in this document.
 
 \subsection{Footnotes}
 
-This section is by its nature not guaranteed to be complete.
-
-But one issue that we noticed close to the end, is that nearly all of our benchmarks were made using a board with just one glider.
+One issue that we noticed close to the end, is that nearly all of our benchmarks were made using a board with just one glider.
 
 The OpenCL variants are probably not strongly effected by this,
 but due to its "output sensitive" computation requirement the \verb|char-cell| optimized variant is influenced by this.
@@ -646,5 +612,35 @@ but due to its "output sensitive" computation requirement the \verb|char-cell| o
     \label{lst:opencl-kernel-source}
     \lstinputlisting[language=C++]{../src/opencl/gol_work_group.cl}
 \end{center}
+
+
+\begin{lstlisting}[caption={Parallel Naive State Generation Algorithm},label={lst:gol-parallel-naive-generation-algorithm},language=C++]
+void game_of_life_loop_omp(board_t& board, board_t& temp, int generations, int display) {
+#pragma omp parallel num_threads(8)
+    {
+        num_threads = omp_get_num_threads();
+        for (int gen = 0; gen < generations; gen++) {
+#pragma omp for
+            for (int row = 0; row < board.row_nr; row++) {
+                for (int col = 0; col < board.col_nr; col++) {
+                    int alive_neighbours = get_neighbour_count(row, col, board);
+                    int cell_survives = board.cell_rows.at(row).at(col) && (alive_neighbours == 2 || alive_neighbours == 3);
+                    int cell_birth = !board.cell_rows.at(row).at(col) && (alive_neighbours == 3);
+                    temp.cell_rows.at(row).at(col) = cell_survives || cell_birth;
+                }
+            }
+#pragma omp master
+            {
+                board.cell_rows.swap(temp.cell_rows);
+
+                if (display) {
+                    display_board_state(board);
+                }
+            }
+#pragma omp barrier
+        }
+    }
+}
+\end{lstlisting}
 
 \end{document}
