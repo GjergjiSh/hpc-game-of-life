@@ -500,9 +500,9 @@ We also implemented another version (V2), that uses 2 seperate memory buffers, a
 
 \subsubsection{Platform}
 
-These findings were recorded on a Tower PC with a GTX 1070, Linux-Kernel 5.15, Nvidia Driver 495.44, and an R5 3600 (both well cooled), using the Nvidia supported OpenCL 3.0 implementation.
+These findings were recorded on a Tower PC with a GTX 1070, Linux-Kernel 5.15, Nvidia Driver 495.44, and an AMD Ryzen R5 3600 (both well cooled), using the Nvidia supported OpenCL 3.0 implementation.
 
-For latter experiments we also installed the Portable Computing Language, which is an OpenCL implementation that compiles via LLVM to run on the CPU.
+For latter experiments we also installed the Portable Computing Language (PoCL), which is an OpenCL implementation that compiles via LLVM to run on the CPU.
 
 We also ported the OpenCL V2 version of our Programm as accurately as possible to OpenMP (porting V1 wasn't possible).
 
@@ -549,17 +549,54 @@ We also saw, as expected, a speedup from the V1 of the kernel, with a global mem
 
 \subsubsection{Results - Comparison to other methods}
 
-
-% \begin{table}
-%     \begin{tabular*}{|l|l|l|l|l|l|l|l}
-%         BLOCK\_SIZE          & 12   & 10   & 8    & 6    & 5    & 4    & 2    \\
-%         \hline \hline
-%         execution time v1 /s & 13.6 & 12.0 & 9.60 & 8.77 & 10.6 & 15.8 & 36.4 \\
-%         execution time v2 /s & 9.34 & 9.60 & 8.10 & 7.86 & 9.86 & 15.4 & 37.5
-%     \end{tabular*}
-% \end{table}
+This can be found in \autoref{chap:summary}, as that it compares all variants.
 
 \section{Summary, conclusions and potential avenues}
+\subsection{Summary}
+\label{chap:summary}
+
+In total the variants we developed on our GPU were the fastest with quite a distance to the rest.
+
+But GPUs are designed for loads like that, and creating that programm was still quite a difficult feat.
+
+Considering that it runs only on a single core, the optimized \verb|char-cell| variant is impressively fast in comparison to the others, and in terms of computational and probably also energy efficiency is hard to beat.
+
+It still beats our best OpenMP variant. That was the port of our OpenCL V2 implementation to OpenMP, handily beating out our first naive OpenMP variant.
+
+The likely reason is that the OpenCL implementations have better cache locality and, while less efficient in computation, spread out the work more.
+
+The reordering of the board into the block gets worked on by all CPU cores, and after that most cores work on their cell.
+
+The execution of our OpenCL implementations on our CPU, using the Portable Computing Language, were interestingly far slower than our OpenMP port.
+We are unsure whether this is due to PoCL being a potentially inefficient implementation, or due to general OpenCL overhead, or something else entirely.
+
+\subsection{Potential avenues}
+
+We had some difficulties and eventually gave up on porting our char-optimized version of the game to OpenCL or OpenMP. 
+The reason is the reconciliation of the neighbor-counts at the borders.
+But perhaps we just didnt find the right solution, so that would be worth looking into.
+On OpenCL however it has to be noted that the speedup due to less computation will not be present due to the single stack pointer. 
+But it probably still reduces memory access.
+
+Our fastest OpenMP implementation was the OpenCL port.
+Because it aims to be as straight a port of the OpenCL variant as possible to be compareable, 
+it has a number of additional optimizations that would be possible, that we sadly didnt get to.
+
+Our OpenCL implementations worked fairly well, but we didnt get to really delve into the profiling that is possible there, 
+using it we might find some optimizations that quite possibly massively increase performance.
+
+\subsection{Potential issues}
+
+This section is by its nature not guaranteed to be complete.
+
+But one issue that I noticed close to the end, is that nearly all of our benchmarks were made using a board with just one glider.
+
+The OpenCL variants are probably not strongly effected by this,
+but due to its "output sensitive" computation requirement the \verb|char-cell| optimized variant is influenced by this.
+
+% avenues: 
+% * better profiling of CPU with intel advisor, `perf` etc
+% * extension of game of life to recognize loops etc
 
 \begin{table}
 \centering
