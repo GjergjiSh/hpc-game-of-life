@@ -115,19 +115,22 @@ int main(int argc, char* argv[]) {
         display_board_state(game_field.get(), board_width, board_height);
     }
 
-    for (uint iteration = 0; iteration < generations; iteration ++) {
+    int group_rows = board_height / BLOCK_SIZE;
+    int group_cols = board_width / BLOCK_SIZE;
+    
+    for (int iteration = 0; iteration < generations; iteration ++) {
         #pragma omp for collapse(2)
-        for (uint group_row = 0; group_row < 2; group_row++) {
-            for (uint group_col = 0; group_col < 2; group_col++) {
+        for (int group_row = 0; group_row < group_rows; group_row++) {
+            for (int group_col = 0; group_col < group_cols; group_col++) {
                 bool local_field[LOCAL_MEM_BLOCK_SIZE * LOCAL_MEM_BLOCK_SIZE];
-                for (uint row = 0; row < LOCAL_MEM_BLOCK_SIZE; row++) {
-                    for (uint column = 0; column < LOCAL_MEM_BLOCK_SIZE; column++) {
+                for (int row = 0; row < LOCAL_MEM_BLOCK_SIZE; row++) {
+                    for (int column = 0; column < LOCAL_MEM_BLOCK_SIZE; column++) {
                         game_of_life_split_util_local_mem(board_width, board_height, game_field.get(), local_field, row, column, group_row, group_col);
                     }
                 }
 
-                for (uint row = 0; row < LOCAL_MEM_BLOCK_SIZE; row++) {
-                    for (uint column = 0; column < LOCAL_MEM_BLOCK_SIZE; column++) {
+                for (int row = 0; row < LOCAL_MEM_BLOCK_SIZE; row++) {
+                    for (int column = 0; column < LOCAL_MEM_BLOCK_SIZE; column++) {
                         game_of_life_split_util_global_mem(board_width, board_height, game_field.get(), local_field, row, column, group_row, group_col);
                     }
                 }
