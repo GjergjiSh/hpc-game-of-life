@@ -119,7 +119,7 @@ int main(int argc, char* argv[]) {
     int group_cols = board_width / BLOCK_SIZE;
     
     for (int iteration = 0; iteration < generations; iteration ++) {
-        #pragma omp for collapse(2)
+        #pragma omp parallel for collapse(2)
         for (int group_row = 0; group_row < group_rows; group_row++) {
             for (int group_col = 0; group_col < group_cols; group_col++) {
                 bool local_field[LOCAL_MEM_BLOCK_SIZE * LOCAL_MEM_BLOCK_SIZE];
