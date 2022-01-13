@@ -561,6 +561,23 @@ We also saw, as expected, a speedup from the V1 of the kernel, with a global mem
 
 \section{Summary, conclusions and potential avenues}
 
+\begin{table}
+\centering
+\begin{tabular}{|l|l|l|l|l|l|l|l|} 
+\hline
+\begin{tabular}[c]{@{}l@{}}Board\\Size\end{tabular} & \begin{tabular}[c]{@{}l@{}}OpenCL V1\\Speed\end{tabular} & \begin{tabular}[c]{@{}l@{}}OpenCL \\V2 Speed\end{tabular} & \begin{tabular}[c]{@{}l@{}}OpenCL \\V1 PCL\end{tabular} & \begin{tabular}[c]{@{}l@{}}OpenCL \\V2 PoCL\end{tabular} & \begin{tabular}[c]{@{}l@{}}Optimized\\Char Cellmap\end{tabular} & \begin{tabular}[c]{@{}l@{}}OpenMP\\Naive\end{tabular} & \begin{tabular}[c]{@{}l@{}}OpenMP\\V2\end{tabular} \\ 
+\hline
+120 & 373 & 264 & 6939 & 6939 & 739 & 116958 & 1895 \\ 
+\hline
+480 & 2997 & 2096 & 39061 & 36447 & 11690 & N/A & 25105 \\
+\hline
+\end{tabular}
+\caption{General Performance Comparison}
+\label{tab:general-performance-comparison}
+\end{table}
+
+
+
 \section{Appendix}
 \begin{center}
     \captionof{figure}{Sourcecode of the kernel for our OpenCL implementation}
