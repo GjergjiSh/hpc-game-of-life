@@ -61,12 +61,12 @@ GameOfLife.omp_ver.out: $(OMP_VER_OBJ)
 	$(OPT_LD) -o GameOfLife.omp_ver.out $(OMP_VER_OBJ)
 
 # All executables we generate in the end
-ALL_EXECUTABLES = GameOfLife.mo.co.out GameOfLife.mu.co.out GameOfLife.mo.cu.out GameOfLife.mu.cu.out GameOfLife.cl.out GameOfLife.cl2.out GameOfLife.omp_ver.out GameOfLife.omp_ver2.out
+ALL_EXECUTABLES = GameOfLife.mo.co.out GameOfLife.mu.co.out GameOfLife.mo.cu.out GameOfLife.mu.cu.out GameOfLife.cl.out GameOfLife.cl2.out GameOfLife.omp_ver.out
 
 all: $(ALL_EXECUTABLES)
 
 # arguments for the executables
-FIELD_AND_GENS = 120 120 100000
+FIELD_AND_GENS = 480 480 100000
 CMD_ARGS = $(FIELD_AND_GENS) 0 1
 CMD_ARGS_OMP = $(FIELD_AND_GENS) 0 0
 
@@ -75,12 +75,12 @@ CMD_ARGS_OMP = $(FIELD_AND_GENS) 0 0
 bench: all
 	# @echo -e "\nManuell unoptimiert, compiler optimiert, seriell"
 	# ./GameOfLife.mu.co.out $(CMD_ARGS)
-	# @echo -e "\nManuell unoptimiert, compiler optimiert, parallel"
-	# ./GameOfLife.mu.co.out $(CMD_ARGS_OMP) 
-	#@echo -e "\nManuell unoptimiert, compiler unoptimiert, seriell"
-	#./GameOfLife.mu.cu.out $(CMD_ARGS)
-	#@echo -e "\nManuell unoptimiert, compiler unoptimiert, parallel"
-	#./GameOfLife.mu.cu.out $(CMD_ARGS_OMP)
+	@echo -e "\nManuell unoptimiert, compiler optimiert, parallel"
+	./GameOfLife.mu.co.out $(CMD_ARGS_OMP) 
+	# @echo -e "\nManuell unoptimiert, compiler unoptimiert, seriell"
+	# ./GameOfLife.mu.cu.out $(CMD_ARGS)
+	# @echo -e "\nManuell unoptimiert, compiler unoptimiert, parallel"
+	# ./GameOfLife.mu.cu.out $(CMD_ARGS_OMP)
 	# @echo -e "\nManuell optimiert, compiler unoptimiert"
 	# ./GameOfLife.mo.cu.out $(CMD_ARGS)
 	@echo -e "\nManuell optimiert, compiler optimiert"
