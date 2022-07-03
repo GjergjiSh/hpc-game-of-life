@@ -1,0 +1,16 @@
+[package]
+name = "rust-opencl"
+version = "0.1.0"
+edition = "2021"
+authors = ["Samuel Maier <samuel.maier2@hotmail.de>"]
+
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+thiserror = "1.0"
+anyhow = "1.0"
+
+[dependencies.opencl3]
+version = "0.7"
+features = ["CL_VERSION_2_1", "CL_VERSION_2_2", "CL_VERSION_3_0"]
