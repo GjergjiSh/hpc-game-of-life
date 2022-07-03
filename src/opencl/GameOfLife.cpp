@@ -177,7 +177,7 @@ struct ClBufferRepr {
     size_t size;
 
     ClBufferRepr(cl_context context, cl_mem_flags flags, size_t size) {
-        mem = clCreateBuffer(context, CL_MEM_READ_ONLY, size, NULL, NULL);
+        mem = clCreateBuffer(context, flags, size, NULL, NULL);
         this->size = size;
         if(!mem)
         {
